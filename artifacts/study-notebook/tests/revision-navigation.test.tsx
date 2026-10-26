@@ -93,6 +93,8 @@ describe('Testing Hub targeted revision wiring', () => {
     expect(rows.find(row => row.textContent?.includes(blank.category))).toHaveTextContent('0 incorrect · 1 blank');
     expect(topics).not.toHaveTextContent(correct.category);
     expect(topics).toHaveTextContent(source.title);
+    expect(ui.queryByTestId('text-question')).not.toBeInTheDocument();
+    await user.click(ui.getByTestId('button-start-revision'));
 
     // Drive the finite session through actual controls, not component callbacks.
     const total = Number(ui.getByTestId('text-practice-score').textContent?.match(/bank of (\d+)/)?.[1]);
@@ -145,8 +147,43 @@ describe('Testing Hub targeted revision wiring', () => {
     await user.click(revise);
     const restarted = screen.getByRole('region', { name: 'Targeted revision' });
     expect(within(restarted).queryByTestId('revision-complete')).not.toBeInTheDocument();
+    expect(within(restarted).queryByTestId('text-question')).not.toBeInTheDocument();
+    await user.click(within(restarted).getByTestId('button-start-revision'));
     expect(within(restarted).getByTestId('text-practice-score')).toHaveTextContent('Session: 0 of 0 correct');
     expectUnrevealed(restarted);
+    expectReadOnly(requests, unexpected);
+  });
+
+  it('revises only the selected missed topic without changing any original results', async () => {
+    const attempt = completedExam();
+    const original = JSON.stringify(attempt);
+    const { user, requests, unexpected } = mountHub(attempt);
+    const results = await openResults(user);
+    const resultText = results.textContent;
+    const revise = within(results).getByTestId('button-revise-missed');
+    await waitFor(() => expect(revise).toBeEnabled());
+    await user.click(revise);
+    const revision = screen.getByRole('region', { name: 'Targeted revision' });
+    const ui = within(revision);
+    await user.click(ui.getByRole('checkbox', { name: new RegExp(blank.category) }));
+    const row = within(ui.getByRole('list', { name: 'Revision topics' })).getAllByRole('listitem')
+      .find(item => item.textContent?.includes(incorrect.category))!;
+    const total = Number(row.textContent?.match(/(\d+) practice questions/)?.[1]);
+    expect(ui.getByRole('status')).toHaveTextContent(`1 of 2 available topics selected · ${total} practice questions`);
+    await user.click(ui.getByTestId('button-start-revision'));
+    for (let index = 0; index < total; index++) {
+      const question = bank.find(q => q.prompt === ui.getByTestId('text-question').textContent)!;
+      expect(question.category).toBe(incorrect.category);
+      expectUnrevealed(revision);
+      await user.click(ui.getByTestId('button-choice-0'));
+      await user.click(ui.getByTestId('button-check'));
+      await user.click(ui.getByTestId('button-next'));
+    }
+    expect(ui.getByTestId('revision-complete')).toBeVisible();
+    await user.click(ui.getByRole('button', { name: 'Back to exam results' }));
+    expect(results.textContent).toBe(resultText);
+    expect(within(results).getAllByTestId(/^result-/)).toHaveLength(3);
+    expect(JSON.stringify(attempt)).toBe(original);
     expectReadOnly(requests, unexpected);
   });
 
