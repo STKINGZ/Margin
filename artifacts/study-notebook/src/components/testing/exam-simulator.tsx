@@ -3,17 +3,18 @@ import { useQueries } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, ClipboardCheck } from 'lucide-react';
 import { getGetSourceQueryOptions, type Source, type SourceDetail, type StudyItem } from '@workspace/api-client-react';
 import { Btn, ErrorNote } from '@/components/ui-bits';
-import { createExam, type PracticeQuestion } from '@/lib/testing';
+import { createExam, createRevision, type PracticeQuestion, type RevisionGroup } from '@/lib/testing';
 import { Explanation, QuestionCard } from './question-card';
 
 const counts = [6, 10, 15, 20];
 type Phase = 'setup' | 'taking' | 'done';
 
-export function ExamSimulator({ sources, approved, onActive }: { sources: Source[]; approved: StudyItem[]; onActive: (a: boolean) => void }) {
+export function ExamSimulator({ sources, approved, onActive, onRevise }: { sources: Source[]; approved: StudyItem[]; onActive: (a: boolean) => void; onRevise: (groups: RevisionGroup[]) => void }) {
   const [picked, setPicked] = useState<number[]>([]);
   const [count, setCount] = useState(10);
   const [phase, setPhase] = useState<Phase>('setup');
   const [exam, setExam] = useState<PracticeQuestion[]>([]);
+  const [examSources, setExamSources] = useState<SourceDetail[]>([]);
   const [frozen, setFrozen] = useState<{ ids: number[]; count: number }>({ ids: [], count: 0 });
   const [ans, setAns] = useState<Record<string, number>>({});
   const [i, setI] = useState(0);
@@ -37,7 +38,7 @@ export function ExamSimulator({ sources, approved, onActive }: { sources: Source
       const data = qs.map((q) => q.data as SourceDetail);
       const e = createExam(data, approved, count);
       if (e.length === 0) { setErr('These lectures have no questions to draw from.'); return; }
-      setErr(''); setFrozen({ ids: [...picked], count }); setExam(e); setAns({}); setI(0); setConfirm(null); setPh('taking');
+      setErr(''); setExamSources(data); setFrozen({ ids: [...picked], count }); setExam(e); setAns({}); setI(0); setConfirm(null); setPh('taking');
     } catch { setErr('Could not build the exam.'); }
   };
   const reset = () => { setConfirm(null); setPh('setup'); };
@@ -91,10 +92,12 @@ export function ExamSimulator({ sources, approved, onActive }: { sources: Source
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Result · not saved</p>
           <p className="font-reading text-4xl font-semibold" data-testid="text-score">{right} / {exam.length} <span className="text-xl text-muted-foreground">{pct.toFixed(1)}%</span></p>
           <p className="text-sm text-muted-foreground">{exam.length - answered} left blank, counted wrong. {frozen.count > exam.length && `Requested ${frozen.count}; the question bank only had ${exam.length}.`}</p>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Btn tone="primary" disabled={right === exam.length} data-testid="button-revise-missed" onClick={() => onRevise(createRevision(exam, ans, examSources))}>Revise missed topics ({exam.length - right})</Btn>
             <Btn tone="primary" data-testid="button-retry-exam" onClick={() => { setAns({}); setI(0); setPh('taking'); }}>Retry same exam</Btn>
             <Btn onClick={reset} data-testid="button-new-exam">New exam</Btn>
           </div>
+          {right === exam.length && <p className="mt-2 text-sm text-muted-foreground">All correct — no missed topics to revise.</p>}
         </div>
         {exam.map((q, n) => (
           <div key={q.id} className="rounded-xl border bg-card p-4" data-testid={`result-${n}`}>

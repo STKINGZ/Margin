@@ -102,3 +102,46 @@ export function scoreExam(questions: PracticeQuestion[], answers: Record<string,
   return { correct, total: questions.length, unanswered: questions.length - answered,
     percent: questions.length ? Math.round(correct / questions.length * 100) : 0 };
 }
+
+export type RevisionGroup = {
+  sourceId: number;
+  category: string;
+  incorrect: number;
+  blank: number;
+  repeated: number;
+  questions: PracticeQuestion[];
+};
+
+function reshuffleQuestion(q: PracticeQuestion): PracticeQuestion {
+  const answer = q.choices[q.correctIndex];
+  const choices = shuffle(q.choices);
+  return { ...q, choices, correctIndex: choices.indexOf(answer) };
+}
+
+/** Temporary practice only: never writes generated exercises into the approved library. */
+export function createRevision(
+  exam: PracticeQuestion[], answers: Record<string, number>, sources: SourceDetail[],
+): RevisionGroup[] {
+  const groups = new Map<string, { missed: PracticeQuestion[]; incorrect: number; blank: number }>();
+  for (const q of exam) {
+    if (answers[q.id] === q.correctIndex) continue;
+    const key = JSON.stringify([q.sourceId, q.category]);
+    const group = groups.get(key) ?? { missed: [], incorrect: 0, blank: 0 };
+    group.missed.push(q);
+    if (answers[q.id] === undefined) group.blank++;
+    else group.incorrect++;
+    groups.set(key, group);
+  }
+  const bank = sources.flatMap(buildPracticeQuestions);
+  const examIds = new Set(exam.map(q => q.id));
+  return [...groups.values()].map(({ missed, incorrect, blank }) => {
+    const { sourceId, category } = missed[0]!;
+    const fresh = bank.filter(q => q.sourceId === sourceId && q.category === category && !examIds.has(q.id));
+    // A singleton topic (including an approved term) may have no new variation.
+    // Repeat its grounded original rather than silently substituting an unrelated topic.
+    const candidates = fresh.length ? fresh : missed.filter(q => q.citations.length > 0);
+    const questions = shuffle(candidates).slice(0, Math.max(3, missed.length)).map(reshuffleQuestion);
+    return { sourceId, category, incorrect, blank,
+      repeated: questions.filter(q => examIds.has(q.id)).length, questions };
+  }).sort((a, b) => a.sourceId - b.sourceId || a.category.localeCompare(b.category));
+}
