@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Margin — CS 202 Study Notebook"
+description = "A personal CS 202 study notebook with a source-grounded tutor, an editable review queue, and an approved flashcard library."
+version = "1.0.0"
+id = "artifacts/study-notebook"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22144
+
+[services.development]
+run = "pnpm --filter @workspace/study-notebook run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/study-notebook", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/study-notebook/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22144"
+BASE_PATH = "/"

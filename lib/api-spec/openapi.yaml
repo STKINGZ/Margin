@@ -1,36 +1,190 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Source-grounded personal study notebook
 servers:
   - url: /api
-    description: Base API path
-tags:
-  - name: health
-    description: Health operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
-      tags: [health]
-      summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /notebook:
+    get:
+      operationId: getNotebook
+      responses:
+        "200":
+          description: Notebook and real summary counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notebook" }
+  /sources/{id}:
+    get:
+      operationId: getSource
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Source pages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SourceDetail" }
+  /messages:
+    get:
+      operationId: listMessages
+      responses:
+        "200":
+          description: Saved conversation
+          content:
+            application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+                type: array
+                items: { $ref: "#/components/schemas/Message" }
+    post:
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MessageInput" }
+      responses:
+        "200":
+          description: Tutor response and number extracted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TutorReply" }
+  /items:
+    get:
+      operationId: listItems
+      parameters:
+        - { name: status, in: query, required: true, schema: { type: string, enum: [pending, approved] } }
+      responses:
+        "200":
+          description: Review queue or flashcard library
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StudyItem" }
+  /items/{id}:
+    patch:
+      operationId: updateItem
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemUpdate" }
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyItem" }
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+    Source:
+      type: object
+      required: [id, title, lecture, pageCount, description]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        lecture: { type: string }
+        pageCount: { type: integer }
+        description: { type: string }
+    SourcePage:
+      type: object
+      required: [page, text]
+      properties:
+        page: { type: integer }
+        text: { type: string }
+    SourceDetail:
+      allOf:
+        - { $ref: "#/components/schemas/Source" }
+        - type: object
+          required: [pages]
+          properties:
+            pages:
+              type: array
+              items: { $ref: "#/components/schemas/SourcePage" }
+    Citation:
+      type: object
+      required: [sourceId, sourceTitle, page, excerpt]
+      properties:
+        sourceId: { type: integer }
+        sourceTitle: { type: string }
+        page: { type: integer }
+        excerpt: { type: string }
+    Message:
+      type: object
+      required: [id, role, content, citations, createdAt]
+      properties:
+        id: { type: integer }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        citations:
+          type: array
+          items: { $ref: "#/components/schemas/Citation" }
+        createdAt: { type: string }
+    MessageInput:
+      type: object
+      required: [content, level]
+      properties:
+        content: { type: string, minLength: 1, maxLength: 6000 }
+        sourceId: { type: [integer, "null"] }
+        level: { type: string, enum: [beginner, intermediate, advanced] }
+    TutorReply:
+      type: object
+      required: [message, extractedCount]
+      properties:
+        message: { $ref: "#/components/schemas/Message" }
+        extractedCount: { type: integer }
+    StudyItem:
+      type: object
+      required: [id, kind, title, question, answer, status, citations, createdAt]
+      properties:
+        id: { type: integer }
+        kind: { type: string, enum: [concept, terminology, flashcard] }
+        title: { type: string }
+        question: { type: string }
+        answer: { type: string }
+        status: { type: string, enum: [pending, approved, discarded, merged] }
+        citations:
+          type: array
+          items: { $ref: "#/components/schemas/Citation" }
+        createdAt: { type: string }
+    ItemUpdate:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [edit, approve, discard, merge] }
+        title: { type: string, minLength: 1, maxLength: 300 }
+        question: { type: string, minLength: 1, maxLength: 2000 }
+        answer: { type: string, minLength: 1, maxLength: 6000 }
+        kind: { type: string, enum: [concept, terminology, flashcard] }
+        mergeTargetId: { type: integer }
+    Notebook:
+      type: object
+      required: [course, sources, pendingCount, approvedCount, messageCount, privacyNotice, aiReady]
+      properties:
+        course: { type: string }
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/Source" }
+        pendingCount: { type: integer }
+        approvedCount: { type: integer }
+        messageCount: { type: integer }
+        privacyNotice: { type: string }
+        aiReady: { type: boolean }

@@ -25,10 +25,15 @@ app.use(
     },
   }),
 );
-app.use(cors());
+// Same-origin browser access only; notebook capability cookies are never exposed.
+app.use(cors({ origin: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+app.use(((err, req, res, _next) => {
+  req.log.error({ err }, "Request failed");
+  res.status(500).json({ error: "The notebook could not complete this request. Please try again." });
+}) as express.ErrorRequestHandler);
 
 export default app;
