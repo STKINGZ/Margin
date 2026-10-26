@@ -8,6 +8,7 @@ A personal, source-grounded study notebook for CS 202 lectures 02–10.
 - Frontend: `pnpm --filter @workspace/study-notebook run dev`
 - Full typecheck: `pnpm run typecheck`
 - Practice engine checks: `pnpm --filter @workspace/scripts exec tsx testing-hub.test.ts`
+- Testing Hub UI regressions: `pnpm --filter @workspace/study-notebook test` (real components with isolated API fixtures; no running server required)
 - API codegen: `pnpm --filter @workspace/api-spec run codegen`
 - Development DB schema: `pnpm --filter @workspace/db run push`
 - Re-import provided lecture text: `node scripts/import-lectures.mjs`
