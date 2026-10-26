@@ -1,0 +1,1 @@
+- [Source citation reliability](source-citation-reliability.md) — let the tutor select server-owned evidence IDs; do not make it reproduce PDF excerpts.

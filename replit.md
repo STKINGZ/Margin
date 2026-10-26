@@ -38,5 +38,5 @@ A personal, source-grounded study notebook for CS 202 lectures 02–10.
 - This intentionally avoids login for the first version. Clearing cookies loses access; cross-device recovery is not implemented.
 - This is NOT authenticated private hosting. Anyone able to reach the app can create a separate notebook and access the course source reader. Keep it in the project preview; do not recommend public publication without first addressing source access and authentication with the user.
 - Only selected lecture text and recent conversation are sent to the AI provider when a tutor request is submitted.
-- Never substitute simulated AI replies if the integration is unavailable. AI setup currently requires Replit phone verification; missing configuration shows an explicit setup notice.
+- Never substitute simulated AI replies if the integration is unavailable. The managed OpenAI integration is enabled; missing configuration shows an explicit setup notice.
 - The initial welcome lesson and three pending source-grounded starter items are prepared examples, not live AI output. The approved library starts empty.

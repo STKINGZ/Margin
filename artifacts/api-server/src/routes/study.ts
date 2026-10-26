@@ -24,7 +24,7 @@ router.get("/notebook",async (_req,res):Promise<void>=>{
     aiReady:!!(process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && process.env.AI_INTEGRATIONS_OPENAI_API_KEY),
     pendingCount:counts.find(c=>c.status==="pending")?.count??0,
     approvedCount:counts.find(c=>c.status==="approved")?.count??0,messageCount:messageCount?.count??0,
-    privacyNotice:"This notebook is tied to this browser by a private cookie. Clearing cookies loses access. No login is required, but this is not authenticated private hosting. Lecture excerpts and chat are sent to the AI provider only when you ask the tutor. AI access currently requires Replit verification if not enabled.",
+    privacyNotice:"This notebook is tied to this browser by a private cookie. Clearing cookies loses access. No login is required, but this is not authenticated private hosting. Lecture excerpts and chat are sent to the AI provider only when you ask the tutor.",
   }));
 });
 router.get("/sources/:id",async(req,res):Promise<void>=>{
