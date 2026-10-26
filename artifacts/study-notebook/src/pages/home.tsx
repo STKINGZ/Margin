@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Inbox, Mic, Square, Sparkles } from 'lucide-react';
 import { useDictation } from '@/hooks/use-dictation';
+import { newTutorSession, readTutorSession, saveTutorSession } from '@/lib/tutor-session';
 import {
   useGetNotebook,
   useListItems,
@@ -41,7 +42,10 @@ function Tutor() {
   const invalidate = useInvalidateNotebook();
   const [draft, setDraft] = useState('');
   const voice = useDictation(draft, setDraft);
-  const [sourceId, setSourceId] = useState<number | null>(null);
+  const [session, setSession] = useState(readTutorSession);
+  const {sourceId, contextId} = session;
+  const activeMessages = msgs.data?.filter(m => m.contextId === contextId && (m.sourceId ?? null) === sourceId);
+  useEffect(() => { saveTutorSession(session); }, [session]);
   const [level, setLevel] = useState<Level>('intermediate');
   const [inflight, setInflight] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -49,7 +53,7 @@ function Tutor() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [msgs.data?.length, inflight]);
+  }, [activeMessages?.length, contextId, inflight]);
 
   const submit = (content: string, fromDraft: boolean) => {
     const text = content.trim();
@@ -58,7 +62,7 @@ function Tutor() {
     setInflight(text);
     setNote(null);
     send.mutate(
-      { data: { content: text, sourceId, level } },
+      { data: { content: text, sourceId, contextId, level } },
       {
         onSuccess: (r) => {
           if (fromDraft) setDraft('');
@@ -75,12 +79,13 @@ function Tutor() {
       <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4" aria-live="polite">
         {msgs.isLoading && <SkeletonLines n={2} />}
         {msgs.isError && <ErrorNote message={errorText(msgs.error, 'Could not load the conversation.')} onRetry={() => msgs.refetch()} />}
-        {msgs.data?.length === 0 && (
+        {activeMessages?.length === 0 && (
           <Empty title="Start with a question" icon={<Sparkles className="size-5" />}>
-            Pick a lecture below, or ask anything about CS 202.
+            {sourceId ? `Fresh context for ${nb.data?.sources.find(s => s.id === sourceId)?.title ?? 'this lecture'}.` : 'Pick a lecture below, or ask anything about CS 202.'}
+            <span className="block mt-2 text-xs">Switching sources starts a fresh conversation. Earlier conversations and review items are kept, but are not used in this context.</span>
           </Empty>
         )}
-        {msgs.data?.map((m) => <Bubble key={m.id} m={m} />)}
+        {activeMessages?.map((m) => <Bubble key={m.id} m={m} />)}
         {inflight && (
           <>
             <div className="flex justify-end">
@@ -130,7 +135,11 @@ function Tutor() {
           <div className="flex flex-wrap gap-2">
             <label className="flex-1 min-w-40 text-[11px] text-muted-foreground">
               Source
-              <select className={`${fieldCls} mt-0.5`} value={sourceId ?? ''} onChange={(e) => setSourceId(e.target.value ? Number(e.target.value) : null)} data-testid="select-source">
+              <select className={`${fieldCls} mt-0.5`} disabled={send.isPending} value={sourceId ?? ''} onChange={(e) => {
+                voice.cancel();
+                setSession(newTutorSession(e.target.value ? Number(e.target.value) : null));
+                setDraft(''); setNote(null); send.reset();
+              }} data-testid="select-source">
                 <option value="">All lectures</option>
                 {nb.data?.sources.map((s) => (
                   <option key={s.id} value={s.id}>

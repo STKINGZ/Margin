@@ -295,6 +295,8 @@ components:
       type: object
       required: [id, role, content, citations, createdAt]
       properties:
+        contextId: { type: [string, "null"] }
+        sourceId: { type: [integer, "null"] }
         id: { type: integer }
         role: { type: string, enum: [user, assistant] }
         content: { type: string }
@@ -306,6 +308,7 @@ components:
       type: object
       required: [content, level]
       properties:
+        contextId: { type: string, minLength: 16, maxLength: 80, pattern: '^[a-zA-Z0-9-]+$' }
         content: { type: string, minLength: 1, maxLength: 6000 }
         sourceId: { type: [integer, "null"] }
         level: { type: string, enum: [beginner, intermediate, advanced] }

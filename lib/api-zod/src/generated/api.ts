@@ -49,6 +49,8 @@ export const GetSourceResponse = zod.object({
 
 
 export const ListMessagesResponseItem = zod.object({
+  "contextId": zod.string().nullish(),
+  "sourceId": zod.number().int().nullish(),
   "id": zod.number().int(),
   "role": zod.enum(['user', 'assistant']),
   "content": zod.string(),
@@ -63,11 +65,17 @@ export const ListMessagesResponseItem = zod.object({
 export const ListMessagesResponse = zod.array(ListMessagesResponseItem)
 
 
+export const sendMessageBodyContextIdMin = 16;
+export const sendMessageBodyContextIdMax = 80;
+
+
+export const sendMessageBodyContextIdRegExp = new RegExp('^[a-zA-Z0-9-]+$');
 export const sendMessageBodyContentMax = 6000;
 
 
 
 export const SendMessageBody = zod.object({
+  "contextId": zod.string().min(sendMessageBodyContextIdMin).max(sendMessageBodyContextIdMax).regex(sendMessageBodyContextIdRegExp).optional(),
   "content": zod.string().min(1).max(sendMessageBodyContentMax),
   "sourceId": zod.number().int().nullish(),
   "level": zod.enum(['beginner', 'intermediate', 'advanced'])
@@ -75,6 +83,8 @@ export const SendMessageBody = zod.object({
 
 export const SendMessageResponse = zod.object({
   "message": zod.object({
+  "contextId": zod.string().nullish(),
+  "sourceId": zod.number().int().nullish(),
   "id": zod.number().int(),
   "role": zod.enum(['user', 'assistant']),
   "content": zod.string(),

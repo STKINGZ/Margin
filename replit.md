@@ -37,6 +37,9 @@ A personal, source-grounded study notebook for CS 202 lectures 02–10.
 
 - The source reader occupies the viewport below navigation. Its lecture list and document have independent vertical scrolling, including stacked panels on phones.
 - The tutor is Socratic: evaluate the student's reasoning concisely, identify the first misconception, and ask one guiding question rather than immediately presenting a full solution.
+- When the student is confused or does not understand, explain only the first small step, use at most 60 words, ask exactly one simple question, and wait. Do not substitute a longer worked solution even if they also request one.
+- Changing the Tutor source starts a new source-session identity and clears the visible chat/draft. Model history is scoped by notebook, session, and source; switching back never restores a previous source's model context. Stored conversations and review items are not deleted.
+- Citation title, page, and excerpt must resolve together from a server-owned evidence chunk; extracted cards use that same resolver, never the current UI selection as substitute metadata.
 - Voice input uses browser-native SpeechRecognition or webkitSpeechRecognition. Click to start/stop, review the editable transcript, then explicitly send. Unsupported browsers and denied permissions retain typed input. Browser speech services may process audio externally; the UI discloses this.
 - `/library` is the Testing Hub, with Quick Recall, Applied Practice, and Exam Simulator.
 - Quick Recall remains the PostgreSQL-backed approved library, filterable by source lecture. Pending items never appear there.

@@ -9,6 +9,10 @@ import type { Citation } from './citation';
 import type { MessageRole } from './messageRole';
 
 export interface Message {
+  /** @nullable */
+  contextId?: string | null;
+  /** @nullable */
+  sourceId?: number | null;
   id: number;
   role: MessageRole;
   content: string;

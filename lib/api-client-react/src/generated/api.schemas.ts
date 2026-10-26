@@ -147,6 +147,10 @@ export const MessageRole = {
 } as const;
 
 export interface Message {
+  /** @nullable */
+  contextId?: string | null;
+  /** @nullable */
+  sourceId?: number | null;
   id: number;
   role: MessageRole;
   content: string;
@@ -164,6 +168,12 @@ export const MessageInputLevel = {
 } as const;
 
 export interface MessageInput {
+  /**
+     * @minLength 16
+     * @maxLength 80
+     * @pattern ^[a-zA-Z0-9-]+$
+     */
+  contextId?: string;
   /**
      * @minLength 1
      * @maxLength 6000

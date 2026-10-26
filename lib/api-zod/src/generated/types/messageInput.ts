@@ -9,6 +9,12 @@ import type { MessageInputLevel } from './messageInputLevel';
 
 export interface MessageInput {
   /**
+     * @minLength 16
+     * @maxLength 80
+     * @pattern ^[a-zA-Z0-9-]+$
+     */
+  contextId?: string;
+  /**
      * @minLength 1
      * @maxLength 6000
      */

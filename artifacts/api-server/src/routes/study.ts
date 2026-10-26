@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, inArray, sql } from "drizzle-orm";
 import { db, studyItemsTable as items, studyMessagesTable as messages } from "@workspace/db";
 import {
   GetNotebookResponse, GetSourceParams, GetSourceResponse, ListMessagesResponse,
@@ -43,7 +43,7 @@ router.get("/messages",async(_req,res):Promise<void>=>{
 router.post("/messages",async(req,res):Promise<void>=>{
   const parsed=SendMessageBody.safeParse(req.body);
   if(!parsed.success){res.status(400).json({error:"Enter a message and select a valid knowledge level."});return;}
-  if(parsed.data.sourceId && !sources.some(s=>s.id===parsed.data.sourceId)){res.status(400).json({error:"Unknown lecture."});return;}
+  if(parsed.data.sourceId != null && !sources.some(s=>s.id===parsed.data.sourceId)){res.status(400).json({error:"Unknown lecture."});return;}
   if(!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || !process.env.AI_INTEGRATIONS_OPENAI_API_KEY){
     res.status(503).json({error:"AI tutor setup is waiting for Replit phone verification. Complete the verification in Replit, then try again. Your sources and review queue are ready; no message was saved or charged."});return;
   }
@@ -52,11 +52,17 @@ router.post("/messages",async(req,res):Promise<void>=>{
   if((cooldown.get(id)??0)>Date.now()){res.status(429).json({error:"Please wait a moment before asking another question."});return;}
   busy.add(id);cooldown.set(id,Date.now()+3000);
   try {
-    const history=(await db.select({role:messages.role,content:messages.content}).from(messages).where(eq(messages.notebookId,id)).orderBy(desc(messages.id)).limit(18)).reverse();
+    // Legacy/stateless requests get no history. Never reuse another lecture's context.
+    const contextId=parsed.data.contextId ?? null;
+    const sourceId=parsed.data.sourceId ?? null;
+    const history=contextId ? (await db.select({role:messages.role,content:messages.content}).from(messages)
+      .where(and(eq(messages.notebookId,id),eq(messages.contextId,contextId),
+        sourceId === null ? isNull(messages.sourceId) : eq(messages.sourceId,sourceId)))
+      .orderBy(desc(messages.id)).limit(18)).reverse() : [];
     const result=await teach(parsed.data,history);
     const saved=await db.transaction(async tx=>{
-      await tx.insert(messages).values({notebookId:id,role:"user",content:parsed.data.content,citations:[]});
-      const [assistant]=await tx.insert(messages).values({notebookId:id,role:"assistant",content:result.content,citations:result.citations}).returning();
+      await tx.insert(messages).values({notebookId:id,contextId,sourceId,role:"user",content:parsed.data.content,citations:[]});
+      const [assistant]=await tx.insert(messages).values({notebookId:id,contextId,sourceId,role:"assistant",content:result.content,citations:result.citations}).returning();
       const existing=await tx.select({question:items.question}).from(items).where(eq(items.notebookId,id));
       const known=new Set(existing.map(i=>i.question.toLowerCase().trim()));
       const fresh=result.items.filter(i=>{const q=i.question.toLowerCase().trim();if(known.has(q))return false;known.add(q);return true;});
