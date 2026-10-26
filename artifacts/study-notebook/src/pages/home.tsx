@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Inbox, Sparkles } from 'lucide-react';
+import { ArrowUp, Inbox, Mic, Square, Sparkles } from 'lucide-react';
+import { useDictation } from '@/hooks/use-dictation';
 import {
   useGetNotebook,
   useListItems,
@@ -39,6 +40,7 @@ function Tutor() {
   const send = useSendMessage();
   const invalidate = useInvalidateNotebook();
   const [draft, setDraft] = useState('');
+  const voice = useDictation(draft, setDraft);
   const [sourceId, setSourceId] = useState<number | null>(null);
   const [level, setLevel] = useState<Level>('intermediate');
   const [inflight, setInflight] = useState<string | null>(null);
@@ -52,6 +54,7 @@ function Tutor() {
   const submit = (content: string, fromDraft: boolean) => {
     const text = content.trim();
     if (!text || send.isPending) return;
+    voice.cancel();
     setInflight(text);
     setNote(null);
     send.mutate(
@@ -152,6 +155,7 @@ function Tutor() {
               rows={2}
               aria-label="Message to tutor"
               placeholder="Ask about a lecture, or explain something back"
+              readOnly={voice.listening}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -162,10 +166,24 @@ function Tutor() {
               className={`${fieldCls} resize-none font-reading text-base`}
               data-testid="input-message"
             />
+            <button type="button" onClick={voice.toggle} disabled={!voice.supported || send.isPending}
+              aria-label={voice.listening ? 'Stop dictation' : 'Push to talk'}
+              aria-pressed={voice.listening}
+              title={!voice.supported ? 'Speech recognition is not supported by this browser' : voice.listening ? 'Stop dictation' : 'Push to talk'}
+              className={`grid size-10 shrink-0 place-items-center rounded-full border disabled:opacity-40 ${voice.listening ? 'bg-destructive text-white animate-pulse' : 'bg-secondary text-primary'}`}
+              data-testid="button-microphone">
+              {voice.listening ? <Square className="size-4" /> : <Mic className="size-5" />}
+            </button>
             <button type="submit" disabled={send.isPending || !draft.trim()} aria-label="Send message" className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-all hover:bg-primary/90 active:scale-90 disabled:opacity-40" data-testid="button-send">
               <ArrowUp className="size-5" />
             </button>
           </div>
+          <p className="text-xs text-muted-foreground" role="status">
+            {voice.listening ? 'Listening… Click stop when finished, then review your transcript before sending.'
+              : !voice.supported ? 'Voice input is unavailable in this browser. You can still type your message.'
+              : 'Push to talk, then click again to stop. Your browser may process audio using its speech service.'}
+          </p>
+          {voice.error && <p role="alert" className="text-xs text-destructive">{voice.error}</p>}
         </form>
       </div>
     </section>

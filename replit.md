@@ -7,6 +7,7 @@ A personal, source-grounded study notebook for CS 202 lectures 02–10.
 - API: `pnpm --filter @workspace/api-server run dev`
 - Frontend: `pnpm --filter @workspace/study-notebook run dev`
 - Full typecheck: `pnpm run typecheck`
+- Practice engine checks: `pnpm --filter @workspace/scripts exec tsx testing-hub.test.ts`
 - API codegen: `pnpm --filter @workspace/api-spec run codegen`
 - Development DB schema: `pnpm --filter @workspace/db run push`
 - Re-import provided lecture text: `node scripts/import-lectures.mjs`
@@ -30,6 +31,18 @@ A personal, source-grounded study notebook for CS 202 lectures 02–10.
 - Every extracted item needs an exact, server-verified source excerpt with a lecture and page reference.
 - Items remain pending until explicitly approved. Edit, approve, merge, and discard are supported; merge preserves both items’ citations.
 - Approved items persist in PostgreSQL, not just browser storage.
+
+## Tutor, source reader, and testing
+
+- The source reader occupies the viewport below navigation. Its lecture list and document have independent vertical scrolling, including stacked panels on phones.
+- The tutor is Socratic: evaluate the student's reasoning concisely, identify the first misconception, and ask one guiding question rather than immediately presenting a full solution.
+- Voice input uses browser-native SpeechRecognition or webkitSpeechRecognition. Click to start/stop, review the editable transcript, then explicitly send. Unsupported browsers and denied permissions retain typed input. Browser speech services may process audio externally; the UI discloses this.
+- `/library` is the Testing Hub, with Quick Recall, Applied Practice, and Exam Simulator.
+- Quick Recall remains the PostgreSQL-backed approved library, filterable by source lecture. Pending items never appear there.
+- Applied questions are computed practice variations grounded in matching original lecture excerpts. Missing supporting evidence means no question. Missing lecture diagrams must never be invented or described as if imported; FSM variations include their own complete transition specification.
+- Practice and exam questions are temporary exercises, not automatically approved permanent cards. This separation preserves the user's review-before-library requirement.
+- Exams cover selected lectures and mix terminology with applied questions. Solutions stay hidden until submission; blanks count as wrong. Questions and choices are randomized, but each answer is computed from a defined rule.
+- Exam answers/results are session-only and explicitly labelled as not saved on reload. Original approved cards and conversation remain persisted in PostgreSQL.
 
 ## Privacy decisions
 

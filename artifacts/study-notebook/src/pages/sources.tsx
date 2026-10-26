@@ -21,13 +21,13 @@ export default function Sources() {
   }, [src.data, page]);
 
   return (
-    <div className="grid gap-6 md:grid-cols-[18rem_minmax(0,1fr)]">
-      <nav aria-label="Lectures" className="md:sticky md:top-20 md:self-start">
+    <div className="grid h-full min-h-0 grid-rows-[minmax(0,0.32fr)_minmax(0,1fr)] gap-4 md:gap-6 md:grid-rows-1 md:grid-cols-[18rem_minmax(0,1fr)]">
+      <nav aria-label="Lectures" className="min-h-0 overflow-y-auto overscroll-contain pr-2">
         <h1 className="font-reading text-3xl font-semibold mb-1">Sources</h1>
         <p className="text-sm text-muted-foreground mb-4">The original lecture material, as imported.</p>
         {nb.isLoading && <SkeletonLines n={3} />}
         {nb.isError && <ErrorNote message={errorText(nb.error, 'Could not load sources.')} onRetry={() => nb.refetch()} />}
-        <ul className="flex md:flex-col gap-1.5 overflow-x-auto pb-1">
+        <ul className="flex flex-col gap-1.5 pb-1">
           {nb.data?.sources.map((s) => {
             const active = s.id === sourceId;
             return (
@@ -48,7 +48,7 @@ export default function Sources() {
         </ul>
       </nav>
 
-      <article className="min-w-0 rounded-2xl border bg-card px-5 py-6 sm:px-10 sm:py-9 shadow-sm">
+      <article aria-label="Lecture content" className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border bg-card px-5 py-6 sm:px-10 sm:py-9 shadow-sm">
         {src.isLoading && <SkeletonLines n={4} />}
         {src.isError && <ErrorNote message={errorText(src.error, 'Could not load this source.')} onRetry={() => src.refetch()} />}
         {!sourceId && !nb.isLoading && <Empty title="No sources" icon={<FileText className="size-5" />} />}
