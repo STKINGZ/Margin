@@ -5,8 +5,8 @@ export const sources = lectures;
 export const sourceSummaries = sources.map(({pages: _pages, ...source}) => source);
 const normalized = (s: string) => s.replace(/\s+/g, " ").trim();
 
-export function verifiedCitation(input: {sourceId:number;page:number;excerpt:string}): SourceCitation | null {
-  const source = sources.find(s => s.id === input.sourceId);
+export function verifiedCitation(input: {sourceId:number;page:number;excerpt:string}, documents: typeof sources = sources): SourceCitation | null {
+  const source = documents.find(s => s.id === input.sourceId);
   const page = source?.pages.find(p => p.page === input.page);
   if (!source || !page || input.excerpt.trim().length < 12 || !normalized(page.text).includes(normalized(input.excerpt))) return null;
   return {sourceId: source.id, sourceTitle: `${source.lecture}: ${source.title}`, page: input.page, excerpt: input.excerpt.trim()};
@@ -39,10 +39,11 @@ export const welcomeMessage = {
   citations: starterItems[0]!.citations,
 };
 
-export function retrievePages(query: string, sourceId?: number | null) {
-  if (sourceId) return sources.filter(s => s.id === sourceId).flatMap(s => s.pages.map(p => ({...p, sourceId:s.id, sourceTitle:s.title})));
+export function retrievePages(query: string, sourceId?: number | null, documents: typeof sources = sources) {
+  const active=sourceId?documents.filter(s=>s.id===sourceId):documents;
+  if(sourceId&&!query.trim()) return active.flatMap(s=>s.pages.map(p=>({...p,sourceId:s.id,sourceTitle:s.title})));
   const words = new Set(query.toLowerCase().match(/[a-z0-9]+/g)?.filter(w => w.length > 2) ?? []);
-  const pages = sources.flatMap(s => s.pages.map(p => {
+  const pages = active.flatMap(s => s.pages.map(p => {
     const text = `${s.title} ${p.text}`.toLowerCase();
     const score = [...words].reduce((n, w) => n + (text.includes(w) ? 1 : 0) + (s.title.toLowerCase().includes(w) ? 4 : 0), 0);
     return {...p, sourceId:s.id, sourceTitle:s.title, score};

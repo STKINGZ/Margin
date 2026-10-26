@@ -7,6 +7,10 @@
  */
 
 export * from './citation';
+export * from './course';
+export * from './courseFileInput';
+export * from './courseInput';
+export * from './downloadBackup200';
 export * from './examAttempt';
 export * from './examAttemptAnswers';
 export * from './examConflictResponse';
@@ -34,6 +38,7 @@ export * from './messageInput';
 export * from './messageInputLevel';
 export * from './messageRole';
 export * from './notebook';
+export * from './practiceInput';
 export * from './source';
 export * from './sourceDetail';
 export * from './sourcePage';

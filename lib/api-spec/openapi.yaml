@@ -6,6 +6,78 @@ info:
 servers:
   - url: /api
 paths:
+  /courses:
+    get:
+      operationId: listCourses
+      responses:
+        "200":
+          description: Private courses
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Course" } }
+    post:
+      operationId: createCourse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourseInput" }
+      responses:
+        "201":
+          description: Created course
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Course" }
+  /courses/{id}/activate:
+    post:
+      operationId: activateCourse
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Active course
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Course" }
+  /courses/{id}/uploads:
+    post:
+      operationId: uploadCourseFile
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/CourseFileInput" }
+      responses:
+        "201":
+          description: Extracted and saved source
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Source" }
+  /practice:
+    post:
+      operationId: generatePractice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PracticeInput" }
+      responses:
+        "200":
+          description: AI-generated source-grounded problems
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/ExamQuestion" } }
+  /backup:
+    get:
+      operationId: downloadBackup
+      responses:
+        "200":
+          description: Complete account JSON backup
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
   /healthz:
     get:
       operationId: healthCheck
@@ -170,6 +242,32 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/ExamError" }
   schemas:
+    CourseInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        description: { type: string, maxLength: 1000 }
+    CourseFileInput:
+      type: object
+      required: [file]
+      properties:
+        file: { type: string, format: binary }
+    PracticeInput:
+      type: object
+      required: [sourceIds, count]
+      properties:
+        sourceIds: { type: array, minItems: 1, maxItems: 20, items: { type: integer } }
+        count: { type: integer, minimum: 1, maximum: 12 }
+    Course:
+      type: object
+      required: [id, title, description, active, sourceCount]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        active: { type: boolean }
+        sourceCount: { type: integer }
     ExamError:
       type: object
       required: [error]
@@ -346,6 +444,7 @@ components:
       type: object
       required: [course, sources, pendingCount, approvedCount, messageCount, privacyNotice, aiReady]
       properties:
+        activeCourseId: { type: integer }
         course: { type: string }
         sources:
           type: array

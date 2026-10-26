@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getGetSourceQueryKey, type ExamAttempt } from '@workspace/api-client-react';
+import type { ExamAttempt } from '@workspace/api-client-react';
 import Library from '@/pages/library';
 import { bank, blank, completedExam, correct, incorrect, source } from './revision-fixtures';
 
@@ -15,6 +15,7 @@ afterEach(() => {
 function mountHub(attempt: ExamAttempt) {
   const requests: { path: string; method: string }[] = [];
   const unexpected: string[] = [];
+  const practiceCalls: { sourceIds: number[]; count: number }[] = [];
   // Fetch is the only mocked boundary. Generated API hooks, saved-exam state,
   // question generation, all four UI components, and citation dialogs are real.
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -33,6 +34,11 @@ function mountHub(attempt: ExamAttempt) {
       data = attempt;
     } else if (method === 'GET' && url.pathname === `/api/sources/${source.id}`) {
       data = source;
+    } else if (method === 'POST' && url.pathname === '/api/practice') {
+      // The server generates practice; the fixture stands in for its response.
+      const body = JSON.parse(String(init?.body ?? '{}')) as { sourceIds: number[]; count: number };
+      practiceCalls.push(body);
+      data = bank.filter(q => body.sourceIds.includes(q.sourceId));
     } else {
       unexpected.push(`${method} ${url.pathname}${url.search}`);
       return Response.json({ error: 'Unexpected test request' }, { status: 500 });
@@ -44,7 +50,7 @@ function mountHub(attempt: ExamAttempt) {
   });
   clients.push(client);
   render(<QueryClientProvider client={client}><Library /></QueryClientProvider>);
-  return { user: userEvent.setup(), requests, unexpected, client };
+  return { user: userEvent.setup(), requests, unexpected, client, practiceCalls };
 }
 
 async function openResults(user: ReturnType<typeof userEvent.setup>) {
@@ -66,7 +72,8 @@ function expectUnrevealed(region: HTMLElement) {
 function expectReadOnly(requests: { path: string; method: string }[], unexpected: string[]) {
   expect(unexpected).toEqual([]);
   expect(requests.some(r => r.path === '/api/items' && r.method === 'POST')).toBe(false);
-  expect(requests.filter(r => r.method !== 'GET')).toEqual([]);
+  // Only practice generation may write; it never touches exams or items.
+  expect(requests.filter(r => r.method !== 'GET' && r.path !== '/api/practice')).toEqual([]);
 }
 
 describe('Testing Hub targeted revision wiring', () => {
@@ -95,6 +102,7 @@ describe('Testing Hub targeted revision wiring', () => {
     expect(topics).toHaveTextContent(source.title);
     expect(ui.queryByTestId('text-question')).not.toBeInTheDocument();
     await user.click(ui.getByTestId('button-start-revision'));
+    await ui.findByTestId('text-practice-score');
 
     // Drive the finite session through actual controls, not component callbacks.
     const total = Number(ui.getByTestId('text-practice-score').textContent?.match(/bank of (\d+)/)?.[1]);
@@ -149,7 +157,7 @@ describe('Testing Hub targeted revision wiring', () => {
     expect(within(restarted).queryByTestId('revision-complete')).not.toBeInTheDocument();
     expect(within(restarted).queryByTestId('text-question')).not.toBeInTheDocument();
     await user.click(within(restarted).getByTestId('button-start-revision'));
-    expect(within(restarted).getByTestId('text-practice-score')).toHaveTextContent('Session: 0 of 0 correct');
+    expect(await within(restarted).findByTestId('text-practice-score')).toHaveTextContent('Session: 0 of 0 correct');
     expectUnrevealed(restarted);
     expectReadOnly(requests, unexpected);
   });
@@ -166,11 +174,10 @@ describe('Testing Hub targeted revision wiring', () => {
     const revision = screen.getByRole('region', { name: 'Targeted revision' });
     const ui = within(revision);
     await user.click(ui.getByRole('checkbox', { name: new RegExp(blank.category) }));
-    const row = within(ui.getByRole('list', { name: 'Revision topics' })).getAllByRole('listitem')
-      .find(item => item.textContent?.includes(incorrect.category))!;
-    const total = Number(row.textContent?.match(/(\d+) practice questions/)?.[1]);
-    expect(ui.getByRole('status')).toHaveTextContent(`1 of 2 available topics selected · ${total} practice questions`);
+    const total = bank.filter(q => q.category === incorrect.category).length;
+    expect(ui.getByRole('status')).toHaveTextContent('1 of 2 available topics selected');
     await user.click(ui.getByTestId('button-start-revision'));
+    await ui.findByTestId('text-question');
     for (let index = 0; index < total; index++) {
       const question = bank.find(q => q.prompt === ui.getByTestId('text-question').textContent)!;
       expect(question.category).toBe(incorrect.category);
@@ -188,9 +195,8 @@ describe('Testing Hub targeted revision wiring', () => {
   });
 
   it('disables revision for a perfect score even once lecture evidence has loaded', async () => {
-    const { user, requests, unexpected, client } = mountHub(completedExam(true));
+    const { user, requests, unexpected, practiceCalls } = mountHub(completedExam(true));
     const results = await openResults(user);
-    await waitFor(() => expect(client.getQueryData(getGetSourceQueryKey(source.id))).toEqual(source));
     // Retry becomes enabled after the saved-exam open operation has settled.
     await waitFor(() => expect(within(results).getByRole('button', { name: 'Retry same exam' })).toBeEnabled());
     expect(within(results).getByTestId('text-score')).toHaveTextContent('3 / 3 100.0%');
@@ -199,6 +205,7 @@ describe('Testing Hub targeted revision wiring', () => {
     expect(within(results).getByText('All correct — no missed topics to revise.')).toBeVisible();
     await user.click(revise);
     expect(screen.queryByRole('region', { name: 'Targeted revision' })).not.toBeInTheDocument();
+    expect(practiceCalls).toEqual([]);
     expectReadOnly(requests, unexpected);
   });
 
@@ -207,7 +214,9 @@ describe('Testing Hub targeted revision wiring', () => {
     await user.click(screen.getByRole('button', { name: 'Applied Practice' }));
     const practice = screen.getByRole('region', { name: 'Applied Practice' });
     const ui = within(practice);
-    await user.selectOptions(await ui.findByRole('combobox', { name: 'Lecture' }), String(source.id));
+    expect(ui.queryByTestId('text-question')).not.toBeInTheDocument();
+    await user.click(await ui.findByTestId(`check-practice-source-${source.id}`));
+    await user.click(ui.getByTestId('button-generate-practice'));
     await ui.findByTestId('text-question');
     expectUnrevealed(practice);
     expect(ui.getByRole('button', { name: 'Check answer' })).toBeDisabled();

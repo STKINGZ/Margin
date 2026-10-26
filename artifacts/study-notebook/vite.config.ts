@@ -31,7 +31,7 @@ export default defineConfig({
   base: basePath,
   plugins: [
     react(),
-    tailwindcss(),
+    tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
@@ -71,6 +71,17 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+      allow: [
+        path.resolve(import.meta.dirname),
+        path.resolve(import.meta.dirname, "../../lib/api-client-react"),
+        path.resolve(import.meta.dirname, "../../lib/exam-engine"),
+        path.resolve(import.meta.dirname, "../../node_modules"),
+      ],
+      deny: [
+        "**/.env", "**/.env.*", "**/*.{crt,pem}", "**/.git/**",
+        "**/artifacts/api-server/**", "**/attached_assets/**", "**/.local/**",
+        "**/lib/db/**", "**/.agents/**", "**/scripts/**", "**/replit.md",
+      ],
     },
   },
   preview: {

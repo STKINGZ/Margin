@@ -5,6 +5,41 @@
  * Source-grounded personal study notebook
  * OpenAPI spec version: 0.1.0
  */
+export interface CourseInput {
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  title: string;
+  /** @maxLength 1000 */
+  description?: string;
+}
+
+export interface CourseFileInput {
+  file: Blob | File;
+}
+
+export interface PracticeInput {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     */
+  sourceIds: number[];
+  /**
+     * @minimum 1
+     * @maximum 12
+     */
+  count: number;
+}
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string;
+  active: boolean;
+  sourceCount: number;
+}
+
 export interface ExamError {
   error: string;
 }
@@ -260,6 +295,7 @@ export interface ItemUpdate {
 }
 
 export interface Notebook {
+  activeCourseId?: number;
   course: string;
   sources: Source[];
   pendingCount: number;
@@ -283,6 +319,8 @@ export type ExamNotFoundResponse = ExamError;
  * An unfinished exam exists, or the attempt changed in another tab
  */
 export type ExamConflictResponse = ExamError;
+
+export type DownloadBackup200 = { [key: string]: unknown };
 
 export type ListItemsParams = {
 status: ListItemsStatus;

@@ -1,13 +1,13 @@
-import { retrievePages, verifiedCitation } from "./course";
+import { retrievePages, verifiedCitation, sources } from "./course";
 
-export function buildTutorEvidence(query: string, sourceId?: number | null) {
-  return retrievePages(query, sourceId).flatMap(page => {
+export function buildTutorEvidence(query: string, sourceId?: number | null, documents: typeof sources = sources) {
+  return retrievePages(query, sourceId, documents).flatMap(page => {
     const text = page.text.replace(/\s+/g, " ").trim();
     return Array.from({length: Math.ceil(text.length / 650)}, (_, index) => {
       const citation = verifiedCitation({
         sourceId: page.sourceId, page: page.page,
         excerpt: text.slice(index * 650, (index + 1) * 650),
-      });
+      },documents);
       if (!citation || citation.excerpt.length < 30) return [];
       // Globally meaningful IDs cannot be confused with another request's E1.
       return [{id: `L${page.sourceId}-P${page.page}-C${index + 1}`, citation}];
@@ -15,14 +15,14 @@ export function buildTutorEvidence(query: string, sourceId?: number | null) {
   });
 }
 
-export function resolveTutorEvidence(ids: string[], evidence: ReturnType<typeof buildTutorEvidence>, sourceId?: number | null) {
+export function resolveTutorEvidence(ids: string[], evidence: ReturnType<typeof buildTutorEvidence>, sourceId?: number | null, documents: typeof sources = sources) {
   return [...new Set(ids)].map(id => {
     const chunk = evidence.find(e => e.id === id);
     if (!chunk || (sourceId != null && chunk.citation.sourceId !== sourceId)) {
       throw new Error("Tutor selected evidence outside the active source.");
     }
     // Resolve title, page and excerpt together. Neither model nor UI supplies metadata.
-    const verified = verifiedCitation(chunk.citation);
+    const verified = verifiedCitation(chunk.citation, documents);
     if (!verified) throw new Error("Tutor evidence no longer matches its original page.");
     return verified;
   });

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, ClipboardCheck } from 'lucide-react';
-import { getGetSourceQueryOptions, type Source, type SourceDetail } from '@workspace/api-client-react';
+import { type Source } from '@workspace/api-client-react';
 import { Btn, ErrorNote } from '@/components/ui-bits';
-import { createRevision, type RevisionGroup } from '@/lib/testing';
+import type { RevisionGroup } from '@/lib/testing';
+import { groupMissed } from '@/lib/revision';
 import { Explanation, QuestionCard } from './question-card';
 import { useSavedExam } from './use-saved-exam';
 
@@ -29,11 +29,7 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
     return () => window.removeEventListener('beforeunload', warn);
   }, [busy]);
 
-  const qs = useQueries({ queries: (attempt?.sourceIds ?? picked).map((id) => getGetSourceQueryOptions(id)) });
-  const loading = qs.some((q) => q.isLoading);
-  const failed = qs.find((q) => q.isError);
-  const ready = picked.length > 0 && qs.every((q) => q.data) && !busy && !saved.history.isLoading && !saved.history.isError;
-  const examSources = qs.flatMap(q => q.data ? [q.data as SourceDetail] : []);
+  const ready = picked.length > 0 && !busy && !saved.history.isLoading && !saved.history.isError;
   const generate = () => saved.start({ sourceIds: picked, requestedCount: count });
   const reset = () => { setConfirm(null); saved.close(); };
   const notice = saved.error && <ErrorNote message={saved.error} />;
@@ -42,7 +38,7 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
   if (phase === 'setup') {
     return (
       <section aria-label="Exam Simulator" className="space-y-5">
-        <p className="text-sm text-muted-foreground">A closed-book run with no solutions until you submit. Progress and scores are saved to this browser’s notebook. Clearing cookies loses access.</p>
+        <p className="text-sm text-muted-foreground">A closed-book run with no solutions until you submit. Questions are generated from the sources you pick, so generating can take a little while. Progress and scores are saved to your notebook.</p>
         {saved.history.isError && <ErrorNote message="Could not load exam history." onRetry={() => saved.history.refetch()} />}
         {notice}
         {!!saved.history.data?.length && (
@@ -51,7 +47,7 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
             {saved.history.data.map(e => (
               <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 border-t py-2 text-sm">
                 <div>
-                  <p>{new Date(e.createdAt).toLocaleString()} · {e.total} questions · {e.sourceIds.length} lectures</p>
+                  <p>{new Date(e.createdAt).toLocaleString()} · {e.total} questions · {e.sourceIds.length} source{e.sourceIds.length === 1 ? '' : 's'}</p>
                   <p className="text-xs text-muted-foreground">{e.status === 'completed' && e.score ? `${e.score.correct} / ${e.score.total} · ${e.score.percent.toFixed(1)}%` : e.status === 'in_progress' ? `Unfinished · ${e.answered} answered · question ${e.currentIndex + 1}` : 'Ended without submission'}</p>
                 </div>
                 {e.status !== 'abandoned' && <Btn disabled={busy} onClick={() => saved.open(e.id)} data-testid={`button-open-exam-${e.id}`}>{e.status === 'in_progress' ? 'Resume exam' : 'View results'}</Btn>}
@@ -60,7 +56,7 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
           </div>
         )}
         <fieldset>
-          <legend className="mb-2 flex items-center justify-between text-sm font-medium">Lectures
+          <legend className="mb-2 flex items-center justify-between text-sm font-medium">Sources
             <span className="flex gap-1">
               <Btn onClick={() => setPicked(sources.map((s) => s.id))} data-testid="button-select-all">Select all</Btn>
               <Btn onClick={() => setPicked([])}>Clear</Btn>
@@ -82,11 +78,10 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
               <button key={c} type="button" aria-pressed={count === c} onClick={() => setCount(c)} data-testid={`button-count-${c}`} className={`rounded-md border px-4 py-1.5 text-sm tabular-nums ${count === c ? 'border-primary bg-primary text-primary-foreground' : 'bg-card'}`}>{c}</button>
             ))}
           </div>
-          {picked.length > count && <p className="mt-2 text-xs text-muted-foreground">The exam will include {picked.length} questions so every selected lecture is represented.</p>}
+          {picked.length > count && <p className="mt-2 text-xs text-muted-foreground">The exam will include {picked.length} questions so every selected source is represented.</p>}
         </div>
-        {failed && <ErrorNote message="Could not load a selected lecture." onRetry={() => qs.forEach((q) => q.isError && q.refetch())} />}
         <Btn tone="primary" disabled={!ready} onClick={generate} data-testid="button-generate">
-          <ClipboardCheck className="size-4" /> {loading ? 'Loading lectures' : picked.length ? 'Generate exam' : 'Select a lecture'}
+          <ClipboardCheck className="size-4" /> {busy ? 'Generating exam…' : picked.length ? 'Generate exam' : 'Select a source'}
         </Btn>
       </section>
     );
@@ -102,14 +97,13 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
         <div className="rounded-xl border bg-card p-5">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Saved result · {new Date(attempt!.completedAt!).toLocaleString()}</p>
           <p className="font-reading text-4xl font-semibold" data-testid="text-score">{right} / {exam.length} <span className="text-xl text-muted-foreground">{pct.toFixed(1)}%</span></p>
-          <p className="text-sm text-muted-foreground">{exam.length - answered} left blank, counted wrong. {frozen.count > exam.length && `Requested ${frozen.count}; the question bank only had ${exam.length}.`}</p>
+          <p className="text-sm text-muted-foreground">{exam.length - answered} left blank, counted wrong. {frozen.count > exam.length && `Requested ${frozen.count}; ${exam.length} could be generated from these sources.`}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Btn tone="primary" disabled={right === exam.length || loading || !!failed || examSources.length !== frozen.ids.length || busy} data-testid="button-revise-missed" onClick={() => onRevise(createRevision(exam, ans, examSources))}>Revise missed topics ({exam.length - right})</Btn>
+            <Btn tone="primary" disabled={right === exam.length || busy} data-testid="button-revise-missed" onClick={() => onRevise(groupMissed(exam, ans))}>Revise missed topics ({exam.length - right})</Btn>
             <Btn tone="primary" disabled={busy} data-testid="button-retry-exam" onClick={() => saved.start({ sourceIds: frozen.ids, requestedCount: frozen.count as (typeof counts)[number], retryOf: attempt!.id })}>Retry same exam</Btn>
             <Btn disabled={busy} onClick={reset} data-testid="button-new-exam">New exam / history</Btn>
           </div>
           {notice}
-          {failed && <ErrorNote message="Could not load lectures for revision." onRetry={() => qs.forEach(q => q.isError && q.refetch())} />}
           {right === exam.length && <p className="mt-2 text-sm text-muted-foreground">All correct — no missed topics to revise.</p>}
         </div>
         {exam.map((q, n) => (
@@ -131,7 +125,7 @@ export function ExamSimulator({ sources, onActive, onRevise }: { sources: Source
       </div>
       {notice}
       {saved.error && <Btn disabled={busy} onClick={() => saved.open(attempt!.id)}>Reload saved progress</Btn>}
-      <p className="text-xs text-muted-foreground">Covering {frozen.ids.length} lecture{frozen.ids.length === 1 ? '' : 's'} · terminology and applied practice · solutions appear after submission.</p>
+      <p className="text-xs text-muted-foreground">Covering {frozen.ids.length} source{frozen.ids.length === 1 ? '' : 's'} · solutions appear after submission.</p>
       <div className="rounded-xl border bg-card p-4 shadow-sm">
         <QuestionCard q={q} selected={ans[q.id] ?? null} onSelect={busy ? undefined : (c) => { void saved.save('save', { ...ans, [q.id]: c }); }} />
       </div>

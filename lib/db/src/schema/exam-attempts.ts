@@ -21,6 +21,7 @@ export type SavedExamScore = { correct: number; total: number; unanswered: numbe
 export const examAttemptsTable = pgTable("study_exam_attempts", {
   id: serial("id").primaryKey(),
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
+  courseId: integer("course_id"),
   status: text("status").$type<"in_progress" | "completed" | "abandoned">().notNull().default("in_progress"),
   sourceIds: jsonb("source_ids").$type<number[]>().notNull(),
   requestedCount: integer("requested_count").notNull(),
@@ -34,7 +35,7 @@ export const examAttemptsTable = pgTable("study_exam_attempts", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
 }, table => [
   index("study_exams_notebook_created").on(table.notebookId, table.createdAt),
-  uniqueIndex("study_exams_one_active").on(table.notebookId).where(sql`${table.status} = 'in_progress'`),
+  uniqueIndex("study_exams_one_active").on(table.notebookId,table.courseId).where(sql`${table.status} = 'in_progress'`),
 ]);
 
 export const insertExamAttemptSchema = createInsertSchema(examAttemptsTable).omit({ id: true, createdAt: true, updatedAt: true });

@@ -19,6 +19,7 @@ export default function Library() {
   const [examLive, setExamLive] = useState(false);
   const [revision, setRevision] = useState<{ groups: RevisionGroup[]; run: number } | null>(null);
   const sources = nb.data?.sources ?? [];
+  const courseKey = nb.data?.activeCourseId ?? 0;
   const go = (id: typeof tab) => {
     if (id !== tab && tab === 'exam' && examLive) {
       // exam state stays mounted; make that explicit rather than silent
@@ -27,7 +28,7 @@ export default function Library() {
     setTab(id);
   };
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl" key={courseKey}>
       <h1 className="font-reading text-3xl font-semibold">Testing Hub</h1>
       <nav className="mb-5 mt-3 flex gap-1 border-b" aria-label="Testing modes">
         {tabs.map((t) => (

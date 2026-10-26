@@ -8,6 +8,7 @@
 import type { Source } from './source';
 
 export interface Notebook {
+  activeCourseId?: number;
   course: string;
   sources: Source[];
   pendingCount: number;

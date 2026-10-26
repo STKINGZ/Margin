@@ -8,12 +8,106 @@
 import * as zod from 'zod';
 
 
+export const ListCoursesResponseItem = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "sourceCount": zod.number().int()
+})
+export const ListCoursesResponse = zod.array(ListCoursesResponseItem)
+
+
+export const createCourseBodyTitleMax = 160;
+
+export const createCourseBodyDescriptionMax = 1000;
+
+
+
+export const CreateCourseBody = zod.object({
+  "title": zod.string().min(1).max(createCourseBodyTitleMax),
+  "description": zod.string().max(createCourseBodyDescriptionMax).optional()
+})
+
+export const CreateCourseResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "sourceCount": zod.number().int()
+})
+
+
+export const ActivateCourseParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const ActivateCourseResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "sourceCount": zod.number().int()
+})
+
+
+export const UploadCourseFileParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const UploadCourseFileBody = zod.object({
+  "file": zod.instanceof(Blob)
+})
+
+export const UploadCourseFileResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "lecture": zod.string(),
+  "pageCount": zod.number().int(),
+  "description": zod.string()
+})
+
+
+export const generatePracticeBodySourceIdsMax = 20;
+
+export const generatePracticeBodyCountMax = 12;
+
+
+
+export const GeneratePracticeBody = zod.object({
+  "sourceIds": zod.array(zod.number().int()).min(1).max(generatePracticeBodySourceIdsMax),
+  "count": zod.number().int().min(1).max(generatePracticeBodyCountMax)
+})
+
+export const GeneratePracticeResponseItem = zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['terminology', 'applied']),
+  "category": zod.string(),
+  "sourceId": zod.number().int(),
+  "prompt": zod.string(),
+  "choices": zod.array(zod.string()),
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string(),
+  "citations": zod.array(zod.object({
+  "sourceId": zod.number().int(),
+  "sourceTitle": zod.string(),
+  "page": zod.number().int(),
+  "excerpt": zod.string()
+}))
+})
+export const GeneratePracticeResponse = zod.array(GeneratePracticeResponseItem)
+
+
+export const DownloadBackupResponse = zod.record(zod.string(), zod.unknown())
+
+
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
 
 
 export const GetNotebookResponse = zod.object({
+  "activeCourseId": zod.number().int().optional(),
   "course": zod.string(),
   "sources": zod.array(zod.object({
   "id": zod.number().int(),

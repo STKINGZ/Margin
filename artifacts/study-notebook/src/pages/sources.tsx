@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useLocation, useSearch } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { FileText } from 'lucide-react';
 import { getGetSourceQueryKey, useGetNotebook, useGetSource } from '@workspace/api-client-react';
 import { Empty, ErrorNote, SkeletonLines } from '@/components/ui-bits';
@@ -22,9 +22,9 @@ export default function Sources() {
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[minmax(0,0.32fr)_minmax(0,1fr)] gap-4 md:gap-6 md:grid-rows-1 md:grid-cols-[18rem_minmax(0,1fr)]">
-      <nav aria-label="Lectures" className="min-h-0 overflow-y-auto overscroll-contain pr-2">
+      <nav aria-label="Sources" className="min-h-0 overflow-y-auto overscroll-contain pr-2">
         <h1 className="font-reading text-3xl font-semibold mb-1">Sources</h1>
-        <p className="text-sm text-muted-foreground mb-4">The original lecture material, as imported.</p>
+        <p className="text-sm text-muted-foreground mb-4">The original course material, as uploaded or imported.</p>
         {nb.isLoading && <SkeletonLines n={3} />}
         {nb.isError && <ErrorNote message={errorText(nb.error, 'Could not load sources.')} onRetry={() => nb.refetch()} />}
         <ul className="flex flex-col gap-1.5 pb-1">
@@ -48,10 +48,10 @@ export default function Sources() {
         </ul>
       </nav>
 
-      <article aria-label="Lecture content" className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border bg-card px-5 py-6 sm:px-10 sm:py-9 shadow-sm">
+      <article aria-label="Source content" className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border bg-card px-5 py-6 sm:px-10 sm:py-9 shadow-sm">
         {src.isLoading && <SkeletonLines n={4} />}
         {src.isError && <ErrorNote message={errorText(src.error, 'Could not load this source.')} onRetry={() => src.refetch()} />}
-        {!sourceId && !nb.isLoading && <Empty title="No sources" icon={<FileText className="size-5" />} />}
+        {!sourceId && !nb.isLoading && <Empty title="No sources in this course" icon={<FileText className="size-5" />}>Upload a PDF or text file to read it here.<Link href="/courses" className="mt-3 block font-medium text-primary underline underline-offset-2" data-testid="link-sources-upload">Go to Courses</Link></Empty>}
         {src.data && (
           <>
             <header className="mb-6 border-b pb-4">

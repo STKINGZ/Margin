@@ -28,9 +28,9 @@ export function QuickRecall({ sources, items, loading, error, onRetry }: { sourc
           <input type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search cards" className={`${fieldCls} pl-9`} data-testid="input-search" />
         </label>
         <label className="w-full min-w-0 sm:w-auto sm:max-w-sm">
-          <span className="sr-only">Lecture</span>
+          <span className="sr-only">Source</span>
           <select value={lecture} onChange={(e) => setLecture(e.target.value)} className={fieldCls} data-testid="select-recall-lecture">
-            <option value="">All lectures</option>
+            <option value="">All sources</option>
             {sources.map((s) => (
               <option key={s.id} value={s.id}>{s.lecture}: {s.title}</option>
             ))}
@@ -45,7 +45,7 @@ export function QuickRecall({ sources, items, loading, error, onRetry }: { sourc
       {items?.length === 0 && (
         <Empty title="No approved cards yet" icon={<BookMarked className="size-5" />}>
           Approve items from the review queue and they will appear here.
-          <Link href="/" className="mt-3 block font-medium text-primary underline underline-offset-2" data-testid="link-to-queue">Go to the review queue</Link>
+          <Link href="/tutor" className="mt-3 block font-medium text-primary underline underline-offset-2" data-testid="link-to-queue">Go to the review queue</Link>
         </Empty>
       )}
       {items && items.length > 0 && shown.length === 0 && (

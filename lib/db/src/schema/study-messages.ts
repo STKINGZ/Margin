@@ -5,6 +5,7 @@ import type { SourceCitation } from "./study-items";
 export const studyMessagesTable = pgTable("study_messages", {
   id: serial("id").primaryKey(),
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
+  courseId: integer("course_id"),
   contextId: text("context_id"),
   sourceId: integer("source_id"),
   role: text("role").notNull(),
