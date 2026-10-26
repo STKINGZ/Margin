@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./lib/exam-engine"
+    },
+    {
       "path": "./lib/integrations-openai-ai-server"
     },
     {

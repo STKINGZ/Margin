@@ -5,6 +5,118 @@
  * Source-grounded personal study notebook
  * OpenAPI spec version: 0.1.0
  */
+export interface ExamError {
+  error: string;
+}
+
+export type ExamQuestionKind = typeof ExamQuestionKind[keyof typeof ExamQuestionKind];
+
+
+export const ExamQuestionKind = {
+  terminology: 'terminology',
+  applied: 'applied',
+} as const;
+
+export interface Citation {
+  sourceId: number;
+  sourceTitle: string;
+  page: number;
+  excerpt: string;
+}
+
+export interface ExamQuestion {
+  id: string;
+  kind: ExamQuestionKind;
+  category: string;
+  sourceId: number;
+  prompt: string;
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  citations: Citation[];
+}
+
+export interface ExamScore {
+  correct: number;
+  total: number;
+  unanswered: number;
+  percent: number;
+}
+
+export type ExamSummaryStatus = typeof ExamSummaryStatus[keyof typeof ExamSummaryStatus];
+
+
+export const ExamSummaryStatus = {
+  in_progress: 'in_progress',
+  completed: 'completed',
+  abandoned: 'abandoned',
+} as const;
+
+export interface ExamSummary {
+  id: number;
+  status: ExamSummaryStatus;
+  sourceIds: number[];
+  requestedCount: number;
+  total: number;
+  answered: number;
+  currentIndex: number;
+  version: number;
+  score: ExamScore | null;
+  createdAt: string;
+  updatedAt: string;
+  /** @nullable */
+  completedAt: string | null;
+}
+
+export type ExamAttemptAnswers = {[key: string]: number};
+
+export type ExamAttempt = ExamSummary & {
+  questions: ExamQuestion[];
+  answers: ExamAttemptAnswers;
+};
+
+export type ExamInputRequestedCount = typeof ExamInputRequestedCount[keyof typeof ExamInputRequestedCount];
+
+
+export const ExamInputRequestedCount = {
+  NUMBER_6: 6,
+  NUMBER_10: 10,
+  NUMBER_15: 15,
+  NUMBER_20: 20,
+} as const;
+
+export interface ExamInput {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     * @items.minimum 1
+     */
+  sourceIds: number[];
+  requestedCount: ExamInputRequestedCount;
+  /** @minimum 1 */
+  retryOf?: number;
+}
+
+export type ExamProgressAnswers = {[key: string]: number};
+
+export type ExamProgressAction = typeof ExamProgressAction[keyof typeof ExamProgressAction];
+
+
+export const ExamProgressAction = {
+  save: 'save',
+  submit: 'submit',
+  abandon: 'abandon',
+} as const;
+
+export interface ExamProgress {
+  /** @minimum 0 */
+  version: number;
+  answers: ExamProgressAnswers;
+  /** @minimum 0 */
+  currentIndex: number;
+  action: ExamProgressAction;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -25,13 +137,6 @@ export interface SourcePage {
 export type SourceDetail = Source & {
   pages: SourcePage[];
 };
-
-export interface Citation {
-  sourceId: number;
-  sourceTitle: string;
-  page: number;
-  excerpt: string;
-}
 
 export type MessageRole = typeof MessageRole[keyof typeof MessageRole];
 
@@ -153,6 +258,21 @@ export interface Notebook {
   privacyNotice: string;
   aiReady: boolean;
 }
+
+/**
+ * Invalid exam input
+ */
+export type ExamInvalidResponse = ExamError;
+
+/**
+ * Exam not found in this notebook
+ */
+export type ExamNotFoundResponse = ExamError;
+
+/**
+ * An unfinished exam exists, or the attempt changed in another tab
+ */
+export type ExamConflictResponse = ExamError;
 
 export type ListItemsParams = {
 status: ListItemsStatus;

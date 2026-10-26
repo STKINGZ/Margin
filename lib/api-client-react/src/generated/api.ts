@@ -25,6 +25,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ExamAttempt,
+  ExamConflictResponse,
+  ExamInput,
+  ExamInvalidResponse,
+  ExamNotFoundResponse,
+  ExamProgress,
+  ExamSummary,
   HealthStatus,
   ItemUpdate,
   ListItemsParams,
@@ -708,5 +715,360 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getUpdateItemMutationOptions(options), queryClient);
+    }
+
+export const getListExamsUrl = () => {
+
+
+
+
+  return `/api/exams`
+}
+
+export const listExams = async ( options?: Parameters<typeof customFetch>[1]): Promise<ExamSummary[]> => {
+
+  return customFetch<ExamSummary[]>(getListExamsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExamsQueryKey = () => {
+    return [
+    `/api/exams`
+    ] as const;
+    }
+
+
+export const getListExamsQueryOptions = <TData = Awaited<ReturnType<typeof listExams>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExamsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExams>>> = ({ signal }) => listExams({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListExamsQueryResult = NonNullable<Awaited<ReturnType<typeof listExams>>>
+export type ListExamsQueryError = ErrorType<unknown>
+
+
+export function useListExams<TData = Awaited<ReturnType<typeof listExams>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listExams>>,
+          TError,
+          Awaited<ReturnType<typeof listExams>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListExams<TData = Awaited<ReturnType<typeof listExams>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listExams>>,
+          TError,
+          Awaited<ReturnType<typeof listExams>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListExams<TData = Awaited<ReturnType<typeof listExams>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListExams<TData = Awaited<ReturnType<typeof listExams>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExams>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListExamsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateExamAttemptUrl = () => {
+
+
+
+
+  return `/api/exams`
+}
+
+export const createExamAttempt = async (examInput: ExamInput, options?: Parameters<typeof customFetch>[1]): Promise<ExamAttempt> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ExamAttempt>(getCreateExamAttemptUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(examInput)
+  }
+);}
+
+
+
+
+
+export const getCreateExamAttemptMutationKey = () => ['createExamAttempt'] as const;
+
+export const getCreateExamAttemptMutationOptions = <TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExamAttempt>>, TError,CreateExamAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createExamAttempt>>, TError,CreateExamAttemptMutationVariables, TContext> => {
+
+const mutationKey = getCreateExamAttemptMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createExamAttempt>>, CreateExamAttemptMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createExamAttempt(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateExamAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof createExamAttempt>>>
+    export type CreateExamAttemptMutationBody = BodyType<ExamInput>
+    export type CreateExamAttemptMutationError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>
+    export type CreateExamAttemptMutationVariables = {data: BodyType<ExamInput>}
+
+    export const useCreateExamAttempt = <TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExamAttempt>>, TError,CreateExamAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createExamAttempt>>,
+        TError,
+        CreateExamAttemptMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateExamAttemptMutationOptions(options), queryClient);
+    }
+
+export const getGetExamAttemptUrl = (id: number,) => {
+
+
+
+
+  return `/api/exams/${id}`
+}
+
+export const getExamAttempt = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<ExamAttempt> => {
+
+  return customFetch<ExamAttempt>(getGetExamAttemptUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExamAttemptQueryKey = (id: number,) => {
+    return [
+    `/api/exams/${id}`
+    ] as const;
+    }
+
+
+export const getGetExamAttemptQueryOptions = <TData = Awaited<ReturnType<typeof getExamAttempt>>, TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExamAttemptQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExamAttempt>>> = ({ signal }) => getExamAttempt(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetExamAttemptQueryResult = NonNullable<Awaited<ReturnType<typeof getExamAttempt>>>
+export type GetExamAttemptQueryError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>
+
+
+export function useGetExamAttempt<TData = Awaited<ReturnType<typeof getExamAttempt>>, TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExamAttempt>>,
+          TError,
+          Awaited<ReturnType<typeof getExamAttempt>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetExamAttempt<TData = Awaited<ReturnType<typeof getExamAttempt>>, TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExamAttempt>>,
+          TError,
+          Awaited<ReturnType<typeof getExamAttempt>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetExamAttempt<TData = Awaited<ReturnType<typeof getExamAttempt>>, TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetExamAttempt<TData = Awaited<ReturnType<typeof getExamAttempt>>, TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse>>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getExamAttempt>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetExamAttemptQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateExamAttemptUrl = (id: number,) => {
+
+
+
+
+  return `/api/exams/${id}`
+}
+
+export const updateExamAttempt = async (id: number,
+    examProgress: ExamProgress, options?: Parameters<typeof customFetch>[1]): Promise<ExamAttempt> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ExamAttempt>(getUpdateExamAttemptUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(examProgress)
+  }
+);}
+
+
+
+
+
+export const getUpdateExamAttemptMutationKey = () => ['updateExamAttempt'] as const;
+
+export const getUpdateExamAttemptMutationOptions = <TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExamAttempt>>, TError,UpdateExamAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateExamAttempt>>, TError,UpdateExamAttemptMutationVariables, TContext> => {
+
+const mutationKey = getUpdateExamAttemptMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateExamAttempt>>, UpdateExamAttemptMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateExamAttempt(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateExamAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof updateExamAttempt>>>
+    export type UpdateExamAttemptMutationBody = BodyType<ExamProgress>
+    export type UpdateExamAttemptMutationError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>
+    export type UpdateExamAttemptMutationVariables = {id: number;data: BodyType<ExamProgress>}
+
+    export const useUpdateExamAttempt = <TError = ErrorType<ExamInvalidResponse | ExamNotFoundResponse | ExamConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExamAttempt>>, TError,UpdateExamAttemptMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateExamAttempt>>,
+        TError,
+        UpdateExamAttemptMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateExamAttemptMutationOptions(options), queryClient);
     }
 

@@ -7,6 +7,22 @@
  */
 
 export * from './citation';
+export * from './examAttempt';
+export * from './examAttemptAnswers';
+export * from './examConflictResponse';
+export * from './examError';
+export * from './examInput';
+export * from './examInputRequestedCount';
+export * from './examInvalidResponse';
+export * from './examNotFoundResponse';
+export * from './examProgress';
+export * from './examProgressAction';
+export * from './examProgressAnswers';
+export * from './examQuestion';
+export * from './examQuestionKind';
+export * from './examScore';
+export * from './examSummary';
+export * from './examSummaryStatus';
 export * from './healthStatus';
 export * from './itemUpdate';
 export * from './itemUpdateAction';

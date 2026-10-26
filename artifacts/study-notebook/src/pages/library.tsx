@@ -40,7 +40,7 @@ export default function Library() {
       <div hidden={tab !== 'applied'}>
         {revision ? <RevisionPractice key={revision.run} groups={revision.groups} sources={sources} onBack={() => setTab('exam')} onExit={() => setRevision(null)} /> : <AppliedPractice sources={sources} />}
       </div>
-      <div hidden={tab !== 'exam'}><ExamSimulator sources={sources} approved={q.data ?? []} onActive={setExamLive} onRevise={(groups) => {
+      <div hidden={tab !== 'exam'}><ExamSimulator sources={sources} onActive={setExamLive} onRevise={(groups) => {
         setRevision(previous => ({ groups, run: (previous?.run ?? 0) + 1 }));
         setTab('applied');
       }} /></div>

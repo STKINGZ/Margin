@@ -1,4 +1,4 @@
-import type { SourceDetail } from '@workspace/api-client-react';
+import type { SourceDetail } from '@workspace/api-zod';
 import { question, type PracticeQuestion } from './testing';
 
 export function buildApplied(source: SourceDetail): PracticeQuestion[] {

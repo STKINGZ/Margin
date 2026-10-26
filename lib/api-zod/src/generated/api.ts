@@ -150,3 +150,195 @@ export const UpdateItemResponse = zod.object({
 })
 
 
+export const ListExamsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "status": zod.enum(['in_progress', 'completed', 'abandoned']),
+  "sourceIds": zod.array(zod.number().int()),
+  "requestedCount": zod.number().int(),
+  "total": zod.number().int(),
+  "answered": zod.number().int(),
+  "currentIndex": zod.number().int(),
+  "version": zod.number().int(),
+  "score": zod.union([zod.object({
+  "correct": zod.number().int(),
+  "total": zod.number().int(),
+  "unanswered": zod.number().int(),
+  "percent": zod.number()
+}),zod.null()]),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "completedAt": zod.string().nullable()
+})
+export const ListExamsResponse = zod.array(ListExamsResponseItem)
+
+
+
+export const createExamAttemptBodySourceIdsMax = 20;
+
+
+
+
+export const CreateExamAttemptBody = zod.object({
+  "sourceIds": zod.array(zod.number().int().min(1)).min(1).max(createExamAttemptBodySourceIdsMax),
+  "requestedCount": zod.union([zod.literal(6),zod.literal(10),zod.literal(15),zod.literal(20)]),
+  "retryOf": zod.number().int().min(1).optional()
+})
+
+export const createExamAttemptResponseTwoAnswersMinOne = 0;
+
+
+
+export const CreateExamAttemptResponse = zod.object({
+  "id": zod.number().int(),
+  "status": zod.enum(['in_progress', 'completed', 'abandoned']),
+  "sourceIds": zod.array(zod.number().int()),
+  "requestedCount": zod.number().int(),
+  "total": zod.number().int(),
+  "answered": zod.number().int(),
+  "currentIndex": zod.number().int(),
+  "version": zod.number().int(),
+  "score": zod.union([zod.object({
+  "correct": zod.number().int(),
+  "total": zod.number().int(),
+  "unanswered": zod.number().int(),
+  "percent": zod.number()
+}),zod.null()]),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "completedAt": zod.string().nullable()
+}).and(zod.object({
+  "questions": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['terminology', 'applied']),
+  "category": zod.string(),
+  "sourceId": zod.number().int(),
+  "prompt": zod.string(),
+  "choices": zod.array(zod.string()),
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string(),
+  "citations": zod.array(zod.object({
+  "sourceId": zod.number().int(),
+  "sourceTitle": zod.string(),
+  "page": zod.number().int(),
+  "excerpt": zod.string()
+}))
+})),
+  "answers": zod.record(zod.string(), zod.number().int().min(createExamAttemptResponseTwoAnswersMinOne))
+}))
+
+
+
+
+
+export const GetExamAttemptParams = zod.object({
+  "id": zod.coerce.number().int().min(1)
+})
+
+export const getExamAttemptResponseTwoAnswersMinOne = 0;
+
+
+
+export const GetExamAttemptResponse = zod.object({
+  "id": zod.number().int(),
+  "status": zod.enum(['in_progress', 'completed', 'abandoned']),
+  "sourceIds": zod.array(zod.number().int()),
+  "requestedCount": zod.number().int(),
+  "total": zod.number().int(),
+  "answered": zod.number().int(),
+  "currentIndex": zod.number().int(),
+  "version": zod.number().int(),
+  "score": zod.union([zod.object({
+  "correct": zod.number().int(),
+  "total": zod.number().int(),
+  "unanswered": zod.number().int(),
+  "percent": zod.number()
+}),zod.null()]),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "completedAt": zod.string().nullable()
+}).and(zod.object({
+  "questions": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['terminology', 'applied']),
+  "category": zod.string(),
+  "sourceId": zod.number().int(),
+  "prompt": zod.string(),
+  "choices": zod.array(zod.string()),
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string(),
+  "citations": zod.array(zod.object({
+  "sourceId": zod.number().int(),
+  "sourceTitle": zod.string(),
+  "page": zod.number().int(),
+  "excerpt": zod.string()
+}))
+})),
+  "answers": zod.record(zod.string(), zod.number().int().min(getExamAttemptResponseTwoAnswersMinOne))
+}))
+
+
+
+
+
+export const UpdateExamAttemptParams = zod.object({
+  "id": zod.coerce.number().int().min(1)
+})
+
+export const updateExamAttemptBodyVersionMin = 0;
+
+export const updateExamAttemptBodyAnswersMinOne = 0;
+
+export const updateExamAttemptBodyCurrentIndexMin = 0;
+
+
+
+export const UpdateExamAttemptBody = zod.object({
+  "version": zod.number().int().min(updateExamAttemptBodyVersionMin),
+  "answers": zod.record(zod.string(), zod.number().int().min(updateExamAttemptBodyAnswersMinOne)),
+  "currentIndex": zod.number().int().min(updateExamAttemptBodyCurrentIndexMin),
+  "action": zod.enum(['save', 'submit', 'abandon'])
+})
+
+export const updateExamAttemptResponseTwoAnswersMinOne = 0;
+
+
+
+export const UpdateExamAttemptResponse = zod.object({
+  "id": zod.number().int(),
+  "status": zod.enum(['in_progress', 'completed', 'abandoned']),
+  "sourceIds": zod.array(zod.number().int()),
+  "requestedCount": zod.number().int(),
+  "total": zod.number().int(),
+  "answered": zod.number().int(),
+  "currentIndex": zod.number().int(),
+  "version": zod.number().int(),
+  "score": zod.union([zod.object({
+  "correct": zod.number().int(),
+  "total": zod.number().int(),
+  "unanswered": zod.number().int(),
+  "percent": zod.number()
+}),zod.null()]),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "completedAt": zod.string().nullable()
+}).and(zod.object({
+  "questions": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['terminology', 'applied']),
+  "category": zod.string(),
+  "sourceId": zod.number().int(),
+  "prompt": zod.string(),
+  "choices": zod.array(zod.string()),
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string(),
+  "citations": zod.array(zod.object({
+  "sourceId": zod.number().int(),
+  "sourceTitle": zod.string(),
+  "page": zod.number().int(),
+  "excerpt": zod.string()
+}))
+})),
+  "answers": zod.record(zod.string(), zod.number().int().min(updateExamAttemptResponseTwoAnswersMinOne))
+}))
+
+

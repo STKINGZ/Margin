@@ -9,9 +9,11 @@ import {
 import { notebookMiddleware } from "../middlewares/notebook";
 import { sources, sourceSummaries } from "../lib/course";
 import { teach } from "../lib/tutor";
+import examsRouter from "./exams";
 
 const router:IRouter=Router();
 router.use(notebookMiddleware);
+router.use(examsRouter);
 const busy=new Set<string>();
 const cooldown=new Map<string,number>();
 

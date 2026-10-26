@@ -88,8 +88,172 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudyItem" }
+  /exams:
+    get:
+      operationId: listExams
+      responses:
+        "200":
+          description: Notebook exam history, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExamSummary" }
+    post:
+      operationId: createExamAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExamInput" }
+      responses:
+        "201":
+          description: Frozen exam attempt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExamAttempt" }
+        "409":
+          $ref: "#/components/responses/ExamConflict"
+        "400":
+          $ref: "#/components/responses/ExamInvalid"
+        "404":
+          $ref: "#/components/responses/ExamNotFound"
+  /exams/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      operationId: getExamAttempt
+      responses:
+        "200":
+          description: Frozen exam and saved progress or results
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExamAttempt" }
+        "404":
+          $ref: "#/components/responses/ExamNotFound"
+        "400":
+          $ref: "#/components/responses/ExamInvalid"
+    patch:
+      operationId: updateExamAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExamProgress" }
+      responses:
+        "200":
+          description: Saved progress or server-scored final result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExamAttempt" }
+        "400":
+          $ref: "#/components/responses/ExamInvalid"
+        "404":
+          $ref: "#/components/responses/ExamNotFound"
+        "409":
+          $ref: "#/components/responses/ExamConflict"
 components:
+  responses:
+    ExamInvalid:
+      description: Invalid exam input
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ExamError" }
+    ExamNotFound:
+      description: Exam not found in this notebook
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ExamError" }
+    ExamConflict:
+      description: An unfinished exam exists, or the attempt changed in another tab
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ExamError" }
   schemas:
+    ExamError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    ExamQuestion:
+      type: object
+      required: [id, kind, category, sourceId, prompt, choices, correctIndex, explanation, citations]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [terminology, applied] }
+        category: { type: string }
+        sourceId: { type: integer }
+        prompt: { type: string }
+        choices:
+          type: array
+          items: { type: string }
+        correctIndex: { type: integer }
+        explanation: { type: string }
+        citations:
+          type: array
+          items: { $ref: "#/components/schemas/Citation" }
+    ExamScore:
+      type: object
+      required: [correct, total, unanswered, percent]
+      properties:
+        correct: { type: integer }
+        total: { type: integer }
+        unanswered: { type: integer }
+        percent: { type: number }
+    ExamSummary:
+      type: object
+      required: [id, status, sourceIds, requestedCount, total, answered, currentIndex, version, score, createdAt, updatedAt, completedAt]
+      properties:
+        id: { type: integer }
+        status: { type: string, enum: [in_progress, completed, abandoned] }
+        sourceIds:
+          type: array
+          items: { type: integer }
+        requestedCount: { type: integer }
+        total: { type: integer }
+        answered: { type: integer }
+        currentIndex: { type: integer }
+        version: { type: integer }
+        score:
+          oneOf:
+            - { $ref: "#/components/schemas/ExamScore" }
+            - { type: "null" }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+        completedAt: { type: [string, "null"] }
+    ExamAttempt:
+      allOf:
+        - { $ref: "#/components/schemas/ExamSummary" }
+        - type: object
+          required: [questions, answers]
+          properties:
+            questions:
+              type: array
+              items: { $ref: "#/components/schemas/ExamQuestion" }
+            answers:
+              type: object
+              additionalProperties: { type: integer, minimum: 0 }
+    ExamInput:
+      type: object
+      required: [sourceIds, requestedCount]
+      properties:
+        sourceIds:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: integer, minimum: 1 }
+        requestedCount: { type: integer, enum: [6, 10, 15, 20] }
+        retryOf: { type: integer, minimum: 1 }
+    ExamProgress:
+      type: object
+      required: [version, answers, currentIndex, action]
+      properties:
+        version: { type: integer, minimum: 0 }
+        answers:
+          type: object
+          additionalProperties: { type: integer, minimum: 0 }
+        currentIndex: { type: integer, minimum: 0 }
+        action: { type: string, enum: [save, submit, abandon] }
     HealthStatus:
       type: object
       required: [status]
