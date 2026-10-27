@@ -12,6 +12,7 @@ export const ListCoursesResponseItem = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
   "description": zod.string(),
+  "isPinned": zod.boolean(),
   "active": zod.boolean(),
   "sourceCount": zod.number().int()
 })
@@ -33,9 +34,46 @@ export const CreateCourseResponse = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
   "description": zod.string(),
+  "isPinned": zod.boolean(),
   "active": zod.boolean(),
   "sourceCount": zod.number().int()
 })
+
+
+
+
+
+export const UpdateCourseParams = zod.object({
+  "id": zod.coerce.number().int().min(1)
+})
+
+export const updateCourseBodyTitleMax = 160;
+
+
+
+export const UpdateCourseBody = zod.object({
+  "title": zod.string().min(1).max(updateCourseBodyTitleMax).optional(),
+  "isPinned": zod.boolean().optional()
+})
+
+export const UpdateCourseResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "isPinned": zod.boolean(),
+  "active": zod.boolean(),
+  "sourceCount": zod.number().int()
+})
+
+
+
+
+
+export const DeleteCourseParams = zod.object({
+  "id": zod.coerce.number().int().min(1)
+})
+
+export const DeleteCourseResponse = zod.void()
 
 
 export const ActivateCourseParams = zod.object({
@@ -46,6 +84,7 @@ export const ActivateCourseResponse = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
   "description": zod.string(),
+  "isPinned": zod.boolean(),
   "active": zod.boolean(),
   "sourceCount": zod.number().int()
 })

@@ -9,6 +9,7 @@ A private, source-grounded study notebook for any class. The original CS 202 lec
 - Full typecheck: `pnpm run typecheck`
 - Legacy practice/revision helper checks: `pnpm --filter @workspace/scripts exec tsx testing-hub.test.ts`
 - Legacy-to-account persistence checks: `pnpm --filter @workspace/scripts exec tsx course-persistence.test.ts`
+- Course editing/cascade/private-file cleanup regression: `pnpm --filter @workspace/scripts exec tsx course-management.test.ts` (isolated fixtures only)
 - Public-access regression checks: `node scripts/private-access.test.mjs`
 - Authenticated upload/tutor/exam/backup journeys require the Clerk browser tester. The earlier cookie-only live scripts explicitly skip their pre-authentication scenarios rather than installing an authentication bypass.
 - Testing Hub UI regressions: `pnpm --filter @workspace/study-notebook test` (real components with isolated API fixtures; no running server required)
@@ -30,6 +31,8 @@ A private, source-grounded study notebook for any class. The original CS 202 lec
 
 - All study content must be behind secure sign-in, including API routes and source text. Access is limited to the configured verified owner.
 - Users can create courses, upload PDF/text/Markdown sources, and switch between courses. Tutor history, review items, library, practice, and exams must remain course-scoped.
+- Courses support persistent pinning and inline title editing. Pinned courses precede unpinned courses in Manage Courses and the course selector; creation order is preserved within each group.
+- Course deletion requires an explicit permanent-loss confirmation and must remove all course-owned originals, extracted sources, conversations, review items, flashcards, and exam history/statistics. Other courses must remain intact. Deleting the last course leaves an empty notebook; never recreate the original lectures automatically afterward.
 - Calm, professional, responsive, reading-optimized experience.
 - Tutor teaches incrementally, adapts to knowledge level and conversation history, and ends with a checking question.
 - Automatic extraction of concepts, terminology, and flashcard questions.

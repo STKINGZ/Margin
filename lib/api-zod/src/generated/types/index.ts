@@ -10,6 +10,7 @@ export * from './citation';
 export * from './course';
 export * from './courseFileInput';
 export * from './courseInput';
+export * from './courseUpdate';
 export * from './downloadBackup200';
 export * from './examAttempt';
 export * from './examAttemptAnswers';

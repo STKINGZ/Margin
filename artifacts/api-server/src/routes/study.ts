@@ -27,7 +27,7 @@ router.get("/notebook",async (_req,res):Promise<void>=>{
   const counts=await db.select({status:items.status,count:sql<number>`count(*)::int`}).from(items).where(and(eq(items.notebookId,id),eq(items.courseId,res.locals.courseId))).groupBy(items.status);
   const [messageCount]=await db.select({count:sql<number>`count(*)::int`}).from(messages).where(and(eq(messages.notebookId,id),eq(messages.courseId,res.locals.courseId),eq(messages.role,"user")));
   res.json(GetNotebookResponse.parse({
-    course:res.locals.course.title,activeCourseId:res.locals.courseId,
+    course:res.locals.course?.title ?? "No active course",activeCourseId:res.locals.courseId || undefined,
     sources:(res.locals.sources as CourseSource[]).map(({pages:_pages,...source})=>source),
     aiReady:!!(process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && process.env.AI_INTEGRATIONS_OPENAI_API_KEY),
     pendingCount:counts.find(c=>c.status==="pending")?.count??0,

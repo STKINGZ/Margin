@@ -18,8 +18,8 @@ export function CourseSwitcher({ activeId, title }: { activeId?: number; title: 
           className="max-w-[14rem] truncate rounded-md border border-transparent bg-transparent py-1 pl-1 pr-6 text-xs text-muted-foreground hover:border-border focus:border-ring disabled:opacity-60"
           data-testid="select-course"
         >
-          {!courses.data && <option value={activeId ?? ''}>{title}</option>}
-          {courses.data?.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+          {(!courses.data || !activeId) && <option value={activeId ?? ''}>{title}</option>}
+          {courses.data?.map((c) => <option key={c.id} value={c.id}>{c.isPinned ? 'Pinned · ' : ''}{c.title}</option>)}
         </select>
       </label>
       <Link href="/courses" className="shrink-0 text-xs text-primary underline-offset-2 hover:underline" data-testid="link-manage-courses">Manage courses</Link>

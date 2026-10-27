@@ -173,7 +173,7 @@ function Opening({ label }: { label: string }) {
 function NotebookGate() {
   const { switching } = useCourseSwitch();
   const notebook = useGetNotebook({ query: { enabled: !switching } });
-  if (switching) return <Opening label="Switching course…" />;
+  if (switching) return <Opening label="Updating your courses…" />;
   if (notebook.isPending) return <Opening label="Opening your notebook…" />;
   if (notebook.isError) {
     const status = (notebook.error as { status?: number } | null)?.status;

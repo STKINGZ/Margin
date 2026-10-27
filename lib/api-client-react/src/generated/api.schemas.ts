@@ -19,6 +19,15 @@ export interface CourseFileInput {
   file: Blob | File;
 }
 
+export interface CourseUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  title?: string;
+  isPinned?: boolean;
+}
+
 export interface PracticeInput {
   /**
      * @minItems 1
@@ -36,6 +45,7 @@ export interface Course {
   id: number;
   title: string;
   description: string;
+  isPinned: boolean;
   active: boolean;
   sourceCount: number;
 }

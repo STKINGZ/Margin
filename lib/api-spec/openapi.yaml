@@ -28,6 +28,29 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Course" }
+  /courses/{id}:
+    patch:
+      operationId: updateCourse
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourseUpdate" }
+      responses:
+        "200":
+          description: Updated course
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Course" }
+    delete:
+      operationId: deleteCourse
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        "204":
+          description: Course and all associated data permanently deleted
   /courses/{id}/activate:
     post:
       operationId: activateCourse
@@ -253,6 +276,11 @@ components:
       required: [file]
       properties:
         file: { type: string, format: binary }
+    CourseUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        isPinned: { type: boolean }
     PracticeInput:
       type: object
       required: [sourceIds, count]
@@ -261,11 +289,12 @@ components:
         count: { type: integer, minimum: 1, maximum: 12 }
     Course:
       type: object
-      required: [id, title, description, active, sourceCount]
+      required: [id, title, description, active, sourceCount, isPinned]
       properties:
         id: { type: integer }
         title: { type: string }
         description: { type: string }
+        isPinned: { type: boolean }
         active: { type: boolean }
         sourceCount: { type: integer }
     ExamError:

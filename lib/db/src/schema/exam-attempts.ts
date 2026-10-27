@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import type { z } from "zod/v4";
 import { notebooksTable } from "./notebooks";
+import { coursesTable } from "./courses";
 import type { SourceCitation } from "./study-items";
 
 export type FrozenExamQuestion = {
@@ -21,7 +22,7 @@ export type SavedExamScore = { correct: number; total: number; unanswered: numbe
 export const examAttemptsTable = pgTable("study_exam_attempts", {
   id: serial("id").primaryKey(),
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
-  courseId: integer("course_id"),
+  courseId: integer("course_id").references(() => coursesTable.id, { onDelete: "cascade" }),
   status: text("status").$type<"in_progress" | "completed" | "abandoned">().notNull().default("in_progress"),
   sourceIds: jsonb("source_ids").$type<number[]>().notNull(),
   requestedCount: integer("requested_count").notNull(),

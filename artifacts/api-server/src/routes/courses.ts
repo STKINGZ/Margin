@@ -1,34 +1,69 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, coursesTable as courses, courseFilesTable as files, notebooksTable } from "@workspace/db";
-import { CreateCourseBody, ActivateCourseParams, UploadCourseFileParams, GetSourceResponse } from "@workspace/api-zod";
+import { CreateCourseBody, ActivateCourseParams, UploadCourseFileParams, GetSourceResponse, UpdateCourseBody, UpdateCourseParams, UpdateCourseResponse, DeleteCourseParams, ListCoursesResponse } from "@workspace/api-zod";
 import { objectStorageClient, ObjectStorageService } from "../lib/objectStorage";
 import { getCourseSources } from "../lib/course-store";
+import { CourseManagementError, permanentlyDeleteCourse } from "../lib/course-management";
 
 const router: IRouter = Router();
 const upload = multer({storage:multer.memoryStorage(),limits:{fileSize:15*1024*1024,files:1,fields:0}});
 router.get("/courses",async (_req,res):Promise<void>=>{
-  const rows=await db.select().from(courses).where(eq(courses.notebookId,res.locals.notebookId)).orderBy(courses.id);
-  res.json(await Promise.all(rows.map(async row=>({
+  const rows=await db.select().from(courses).where(eq(courses.notebookId,res.locals.notebookId)).orderBy(desc(courses.isPinned),courses.id);
+  res.json(ListCoursesResponse.parse(await Promise.all(rows.map(async row=>({
     id:row.id,title:row.title,description:row.description,active:row.id===res.locals.courseId,
+    isPinned:row.isPinned,
     sourceCount:(await getCourseSources(row.id,res.locals.notebookId)).length,
-  }))));
+  })))));
 });
 router.post("/courses",async (req,res):Promise<void>=>{
   const body=CreateCourseBody.safeParse(req.body);
   if(!body.success||!body.data.title.trim()){res.status(400).json({error:"Enter a course name."});return;}
   const [row]=await db.insert(courses).values({notebookId:res.locals.notebookId,title:body.data.title.trim(),description:body.data.description?.trim()??""}).returning();
-  res.status(201).json({id:row!.id,title:row!.title,description:row!.description,active:false,sourceCount:0});
+  res.status(201).json({id:row!.id,title:row!.title,description:row!.description,isPinned:row!.isPinned,active:false,sourceCount:0});
+});
+router.patch("/courses/:id",async(req,res):Promise<void>=>{
+  const params=UpdateCourseParams.safeParse(req.params), body=UpdateCourseBody.safeParse(req.body);
+  if(!params.success||!body.success||(!Object.keys(body.data).length)||body.data.title!==undefined&&!body.data.title.trim()){
+    res.status(400).json({error:"Provide a non-empty title or a pin setting."});return;
+  }
+  const [row]=await db.update(courses).set({
+    ...(body.data.title!==undefined?{title:body.data.title.trim()}:{}),
+    ...(body.data.isPinned!==undefined?{isPinned:body.data.isPinned}:{}),
+  }).where(and(eq(courses.id,params.data.id),eq(courses.notebookId,res.locals.notebookId))).returning();
+  if(!row){res.status(404).json({error:"Course not found."});return;}
+  res.json(UpdateCourseResponse.parse({
+    id:row.id,title:row.title,description:row.description,isPinned:row.isPinned,active:row.id===res.locals.courseId,
+    sourceCount:(await getCourseSources(row.id,res.locals.notebookId)).length,
+  }));
+});
+router.delete("/courses/:id",async(req,res):Promise<void>=>{
+  const params=DeleteCourseParams.safeParse(req.params);
+  if(!params.success){res.status(400).json({error:"Invalid course."});return;}
+  try {
+    await permanentlyDeleteCourse(res.locals.notebookId,params.data.id);
+    res.sendStatus(204);
+  }catch(err){
+    if(err instanceof CourseManagementError){res.status(err.status).json({error:err.message});return;}
+    throw err;
+  }
 });
 router.post("/courses/:id/activate",async (req,res):Promise<void>=>{
   const params=ActivateCourseParams.safeParse(req.params);
   if(!params.success){res.status(400).json({error:"Invalid course."});return;}
   const [row]=await db.select().from(courses).where(and(eq(courses.id,params.data.id),eq(courses.notebookId,res.locals.notebookId)));
   if(!row){res.status(404).json({error:"Course not found."});return;}
-  await db.update(notebooksTable).set({activeCourseId:row.id}).where(eq(notebooksTable.id,res.locals.notebookId));
-  res.json({id:row.id,title:row.title,description:row.description,active:true,sourceCount:(await getCourseSources(row.id,res.locals.notebookId)).length});
+  const activated=await db.transaction(async tx=>{
+    await tx.select().from(notebooksTable).where(eq(notebooksTable.id,res.locals.notebookId)).for("update");
+    const [current]=await tx.select().from(courses).where(and(eq(courses.id,row.id),eq(courses.notebookId,res.locals.notebookId)));
+    if(!current) return false;
+    await tx.update(notebooksTable).set({activeCourseId:row.id}).where(eq(notebooksTable.id,res.locals.notebookId));
+    return true;
+  });
+  if(!activated){res.status(404).json({error:"Course not found."});return;}
+  res.json({id:row.id,title:row.title,description:row.description,isPinned:row.isPinned,active:true,sourceCount:(await getCourseSources(row.id,res.locals.notebookId)).length});
 });
 router.post("/courses/:id/uploads",upload.single("file"),async (req,res):Promise<void>=>{
   const params=UploadCourseFileParams.safeParse(req.params);

@@ -12,6 +12,13 @@ for(const [path,body] of [["/courses",{title:"Unauthorized"}],["/messages",{cont
   const response=await fetch(`${origin}/api${path}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   assert.equal(response.status,401,`Unauthenticated write ${path} must be private`);
 }
+for(const method of ["PATCH","DELETE"]) {
+  const response=await fetch(`${origin}/api/courses/1`,{
+    method,headers:{"Content-Type":"application/json"},
+    ...(method==="PATCH"?{body:JSON.stringify({title:"Unauthorized",isPinned:true})}:{}),
+  });
+  assert.equal(response.status,401,`Unauthenticated course ${method} must be private`);
+}
 const source=fileURLToPath(new URL("../artifacts/api-server/src/data/lectures.json",import.meta.url));
 for(const prefix of ["","/__mockup"]) {
   const response=await fetch(`${origin}${prefix}/@fs${source}`);

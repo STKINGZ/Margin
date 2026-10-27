@@ -59,8 +59,8 @@ export const notebookMiddleware: RequestHandler = async (req, res, next) => {
     res.locals.notebookId=id;
     const course=await initializeCourses(id);
     res.locals.course=course;
-    res.locals.courseId=course.id;
-    res.locals.sources=await getCourseSources(course.id,id);
+    res.locals.courseId=course?.id ?? 0;
+    res.locals.sources=course ? await getCourseSources(course.id,id) : [];
     res.setHeader("Cache-Control","private, no-store");
     res.setHeader("X-Robots-Tag","noindex, nofollow");
     next();

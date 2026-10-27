@@ -1,11 +1,12 @@
 import { pgTable, serial, text, integer, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { notebooksTable } from "./notebooks";
+import { coursesTable } from "./courses";
 
 export type SourceCitation = { sourceId: number; sourceTitle: string; page: number; excerpt: string };
 export const studyItemsTable = pgTable("study_items", {
   id: serial("id").primaryKey(),
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
-  courseId: integer("course_id"),
+  courseId: integer("course_id").references(() => coursesTable.id, { onDelete: "cascade" }),
   kind: text("kind").notNull(),
   title: text("title").notNull(),
   question: text("question").notNull(),

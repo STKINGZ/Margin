@@ -6,13 +6,14 @@ export const coursesTable = pgTable("study_courses", {
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
+  isPinned: boolean("is_pinned").notNull().default(false),
   legacy: boolean("legacy").notNull().default(false),
   createdAt: timestamp("created_at", {withTimezone:true}).notNull().defaultNow(),
 }, table => [index("study_courses_owner").on(table.notebookId)]);
 
 export const courseFilesTable = pgTable("study_course_files", {
   id: serial("id").primaryKey(),
-  courseId: integer("course_id").notNull().references(() => coursesTable.id),
+  courseId: integer("course_id").notNull().references(() => coursesTable.id, { onDelete: "cascade" }),
   notebookId: text("notebook_id").notNull().references(() => notebooksTable.id),
   title: text("title").notNull(),
   filename: text("filename").notNull(),

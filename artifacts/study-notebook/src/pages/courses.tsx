@@ -13,6 +13,7 @@ import {
 } from '@workspace/api-client-react';
 import { Btn, Empty, ErrorNote, SkeletonLines, fieldCls } from '@/components/ui-bits';
 import { BackupButton } from '@/components/backup-button';
+import { CourseEditing } from '@/components/course-editing';
 import { useCourseSwitch, useWritesPending } from '@/lib/course-switch';
 import { errorText } from '@/lib/notebook';
 
@@ -68,7 +69,7 @@ function CreateCourse() {
     e.preventDefault();
     if (!title.trim()) return;
     create.mutate({ data: { title: title.trim(), description: description.trim() || undefined } }, {
-      onSuccess: () => { setTitle(''); setDescription(''); qc.invalidateQueries({ queryKey: getListCoursesQueryKey() }); },
+      onSuccess: () => { setTitle(''); setDescription(''); qc.invalidateQueries({ queryKey: getListCoursesQueryKey() }); qc.invalidateQueries({ queryKey: getGetNotebookQueryKey() }); },
     });
   };
   return (
@@ -109,9 +110,9 @@ export default function Courses() {
             const active = c.id === nb.data?.activeCourseId || c.active;
             return (
               <li key={c.id} className={`rounded-2xl border p-5 ${active ? 'border-primary/40 bg-secondary/50' : 'bg-card'}`} data-testid={`card-course-${c.id}`}>
-                <div className="flex flex-wrap items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="font-reading text-xl font-semibold leading-snug">{c.title}</h2>
+                <div className="flex flex-col items-start gap-3 sm:flex-row">
+                  <div className="w-full min-w-0 flex-1 sm:w-auto">
+                    <CourseEditing course={c} />
                     {c.description && <p className="mt-0.5 text-sm text-muted-foreground">{c.description}</p>}
                     <p className="mt-1 font-mono text-[11px] text-accent-foreground">{c.sourceCount} source{c.sourceCount === 1 ? '' : 's'}</p>
                   </div>
